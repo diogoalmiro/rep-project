@@ -1,0 +1,474 @@
+<!doctype html>
+<html>
+  <head>
+	  <title>DOT - Dados das Organizações do Trabalho</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/dropdown.css') }}" />
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/tables.css') }}" />
+    <script src="{{ url_for('static', filename='js/jquery-1.11.0.min.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Chart.bundle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Chart.Geo.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.base64.min.js') }}"></script>
+  </head>
+
+<body>
+
+    <div class="container" style="text-align:center;">
+	    
+      <div class="text-center p-1">
+        <img width="170px" src="{{ url_for('static', filename='img/dgert-logo.png') }}">
+        <img width="170px" src="{{ url_for('static', filename='img/rep-logo.png') }}">
+        <h5>DOT - Dados das Organizações do Trabalho</h5>
+      </div>
+      <div id="graphs1" class="row">
+        <div class="col-md-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h6 id="orgs_sind_year" class="text-center">Organizações sindicais por ano</h6>
+            </div>
+            <div class="panel-body">
+              <canvas id="bar-chart1"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h6 id="orgs_emp_year" class="text-center">Organizações de empregadores por ano</h6>
+            </div>
+            <div class="panel-body">
+              <canvas id="bar-chart2"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="graphs2" class="row">
+        <div class="col-md-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h6 id="strike-notices" class="text-center">Pré-avisos de greve por ano</h6>
+            </div>
+            <div class="panel-body">
+              <canvas id="bar-chart3"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h6 id="orgs_per_sector" class="text-center">Atos de negociação coletiva por ano</h6>
+            </div>
+            <div class="panel-body">
+              <canvas id="bar-chart4"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>     
+
+      <!-- <div id="graphs3" class="row">
+        <div class="col-md-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h6 id="org_per_district1" class="text-center">Organizações sindicais por distrito</h6>
+            </div>
+            <div class="panel-body">
+              <canvas id="map1"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h6 id="org_per_district2" class="text-center">Organizações de empregadores por distrito</h6>
+            </div>
+            <div class="panel-body">
+              <canvas id="map2"></canvas>
+            </div>
+          </div>
+        </div>
+      </div> -->
+	    	    
+  </div>
+
+  <script>
+    var table = "Unions";
+    var org = "";	  
+    var org_district_chart1;
+    var org_district_chart2;
+    var district_org = { };
+    var updated = false;
+    var table_do_search = "Unions";
+    var org_do_search = "";
+
+    function orgs_by_type_year(table, dados) {
+      if(dados[0].length != 0){
+        org_type_year_chart1.data.datasets[0].label = "Confederações";
+        org_type_year_chart1.data.datasets[1].label = "Federações";
+        org_type_year_chart1.data.datasets[2].label = "Sindicatos";
+        org_type_year_chart1.data.datasets[3].label = "Uniões";
+        org_type_year_chart2.data.datasets[0].label = "Confederações";
+        org_type_year_chart2.data.datasets[1].label = "Federações";
+        org_type_year_chart2.data.datasets[2].label = "Associações";
+        org_type_year_chart2.data.datasets[3].label = "Uniões";
+	if ( table == "Unions" || table == "") {
+	   org_type_year_chart1.data.datasets[0].data = dados[0];
+           org_type_year_chart1.data.datasets[1].data = dados[1];
+           org_type_year_chart1.data.datasets[2].data = dados[2];
+           org_type_year_chart1.data.datasets[3].data = dados[3];
+           org_type_year_chart1.update();
+	} else {
+	   org_type_year_chart2.data.datasets[0].data = dados[0];
+           org_type_year_chart2.data.datasets[1].data = dados[1];
+           org_type_year_chart2.data.datasets[2].data = dados[2];
+           org_type_year_chart2.data.datasets[3].data = dados[3];
+           org_type_year_chart2.update();
+	}
+      }
+    }
+
+    function orgs_by_district(dados) {
+      var i = 0;
+      distPT.forEach(function(district) {
+        district_org[district] = dados[i];
+        i++;
+      });
+    }
+
+    function get_org_values_by_district(distrito) {
+      var orgValue = 0;
+      if (!(distrito in district_org)){
+        return 0;
+      } else {
+        orgValue = district_org[distrito];
+        return orgValue;
+      }
+    }
+
+    function get_max_tick(dados) {
+      var max = dados.reduce(function(a, b) { return Math.max(a, b); });
+      return Math.ceil(max / 10) * 10;
+    }
+
+    function get_stepsize_tick(dados) {
+      var max = dados.reduce(function(a, b) { return Math.max(a, b); });
+      return Math.ceil(max / 10) * 2;
+    }
+
+    function org_district_update(table, dados) {
+      if(dados.length != 0){
+        if(table=="Unions" || table==""){
+          document.getElementById("orgs_per_district1").innerHTML = "Organizações sindicais por distrito";
+        } else {
+          document.getElementById("orgs_per_district2").innerHTML = "Organizações de empregadores por distrito";
+        }
+        orgs_by_district(dados);
+        org_district_chart1.data.datasets[0].data = distritosPT.map((d) => ({feature: d, value: get_org_values_by_district(d.properties.name)}));
+        org_district_chart1.options.geo.colorScale.ticks.max = get_max_tick(dados);
+        org_district_chart1.options.geo.colorScale.ticks.stepSize = get_stepsize_tick(dados);
+        org_district_chart1.update();
+        org_district_chart2.data.datasets[0].data = distritosPT.map((d) => ({feature: d, value: get_org_values_by_district(d.properties.name)}));
+        org_district_chart2.options.geo.colorScale.ticks.max = get_max_tick(dados);
+        org_district_chart2.options.geo.colorScale.ticks.stepSize = get_stepsize_tick(dados);
+        org_district_chart2.update();
+      }
+    }
+	  
+    function strike_notices_update(dados){
+      if(dados.length != 0){
+        org_strike_notices_chart.data.datasets[0].data = dados;
+        org_strike_notices_chart.update();
+      }
+    }
+
+    function orgs_by_sector(table, dados){
+      if(dados.length != 0){
+        if(table=="Unions" || table==""){
+          document.getElementById("orgs_per_sector").innerHTML = "Organizações sindicais por setor económico";
+          org_sector_chart.data.datasets[0].label = "Organizações";
+        } else {
+          document.getElementById("orgs_per_sector").innerHTML = "Organizações de empregadores por setor económico";
+          org_sector_chart.data.datasets[0].label = "Organizações";
+        }
+        org_sector_chart.data.datasets[0].data = dados;
+        org_sector_chart.update();
+      }
+    }
+
+    var org_type_year_chart1 = new Chart(document.getElementById("bar-chart1"), {
+     type: 'bar',
+     data: {
+       labels: {{ dataset.barchart1_labels | safe }},
+       datasets: [
+        {
+          label: "Confederações",
+          data: {{ dataset.barchart1_data | safe }},
+          backgroundColor: '#228B22' // green
+        },
+        {
+          label: "Federações",
+          data: {{ dataset.barchart1_data2 | safe }},
+          backgroundColor: '#FFD700' // yellow
+        },
+        {
+          label: "Sindicatos",
+          data: {{ dataset.barchart1_data3 | safe }},
+          backgroundColor: '#FF0000' // red
+        },
+        {
+          label: "Uniões",
+          data: {{ dataset.barchart1_data4 | safe }},
+          backgroundColor: '#0000FF' // blue
+        }
+      ]
+    },
+    options: {
+      legend: { display: true,
+                labels: {
+                  fontSize: 10
+                }
+              },
+      scales: {
+        xAxes: [{ stacked: true }],
+        yAxes: [{ stacked: true }]
+      }
+    }
+    });
+  
+    var org_type_year_chart2 = new Chart(document.getElementById("bar-chart2"), {
+     type: 'bar',
+     data: {
+       labels: {{ dataset.barchart2_labels | safe }},
+       datasets: [
+        {
+          label: "Confederações",
+          data: {{ dataset.barchart2_data | safe }},
+          backgroundColor: '#228B22' // green
+        },
+        {
+          label: "Federações",
+          data: {{ dataset.barchart2_data2 | safe }},
+          backgroundColor: '#FFD700' // yellow
+        },
+        {
+          label: "Associações",
+          data: {{ dataset.barchart2_data3 | safe }},
+          backgroundColor: '#FF0000' // red
+        },
+        {
+          label: "Uniões",
+          data: {{ dataset.barchart2_data4 | safe }},
+          backgroundColor: '#0000FF' // blue
+        }
+      ]
+    },
+    options: {
+      legend: { display: true,
+                labels: {
+                  fontSize: 10
+                }
+              },
+      scales: {
+        xAxes: [{ stacked: true }],
+        yAxes: [{ stacked: true }]
+      }
+    }
+    });	  
+	  
+    var i = 0;
+    //nomes dos distritos portugueses
+    var distPT = [];
+    //conteudo do mapa
+    var distritosPT = [];
+    var value = "";
+    //outline do mapa(portugal + espanha)
+    const distritos2 = [];
+    //valores do mapa
+    var valores = {{dataset.map_data}};
+    //dicionario que associa aos distritos o num organizacoes
+    var dict = {};
+	
+    fetch("{{ url_for('static', filename='data/Iberic.json') }}").then(r => r.json()).then((ib) => {
+      const distritos = ib.features;
+      distritos.forEach( function(entry) {
+        value = entry.properties.name.toUpperCase();
+        if(!(typeof(entry.properties.admin) == "undefined")) {
+          if(value != "AZORES" && value != "MADEIRA") {
+            if(value == "ÉVORA") { value = "EVORA"; }
+            distPT.push(value);
+            entry.properties.name = value;
+            distritosPT.push(entry);
+            distritos2.push(entry);
+          }
+        } else {
+            if (value != "CANARIAS" && value != "BALEARES") {
+              entry.properties.name = value;
+              distritos2.push(entry);
+            }
+        }
+      });	    
+      distritosPT.sort(function(a, b) {
+        var keyA = a.properties.name.toUpperCase();
+        var keyB = b.properties.name.toUpperCase();
+        if(keyA < keyB) return -1;
+        if(keyA > keyB) return 1;
+        return 0;
+      });
+      distPT.sort();
+      distPT.forEach( function(district) {
+        dict[district] = valores[i];
+        i++;
+      });
+      valores.sort(function(a, b){return a - b});
+      var orgValue = 0;
+      var value = 0;
+      var j=0;
+      var max = valores.reduce(function(a, b) { return Math.max(a, b); });
+
+      function orgValues(district) {
+       if (!(district in dict)) { return 0; } else{
+        orgValue = dict[district];
+        return orgValue;
+       }
+      }
+
+      org_district_chart1 = new Chart(document.getElementById("map1").getContext("2d"), {
+        type: 'choropleth',
+        data: {
+          labels: distritosPT.map((d) => d.properties.name),
+          datasets: [{
+            label: 'Distritos',
+             //outline: distritos2,
+            outline: distritosPT,
+            data: distritosPT.map((d) => ({feature: d, value: orgValues(d.properties.name)})),
+          }]
+        },
+        options: {
+          showOutline: true,
+          legend: {
+            display: false
+          },
+          scale: {
+            projection: 'mercator'
+          },
+          geo: {
+            colorScale: {
+              display: true,
+              interpolate: 'YlOrRd',
+              //position: 'top',
+              quantize: 10,
+              ticks: {
+                  min: 0,
+                  max: get_max_tick(valores),
+                  stepSize: get_stepsize_tick(valores)
+              },
+              legend: {
+                //position: 'bottom-right'
+                align: 'right'
+                //position: 'top-right'
+              },
+            },
+          },
+          tooltips: {
+            callbacks: {
+              label: function(tooltipItem, data){
+                var distrito = data['labels'][tooltipItem['index']];
+                return distrito;
+              },
+              afterLabel: function(tooltipItem, data) {
+                var valor = data.datasets[0].data[tooltipItem.index]['value'];
+                return "Organizações: " + valor;  
+              }
+            }
+          }
+        }
+      });
+    });
+
+    var org_strike_notices_chart = new Chart(document.getElementById("bar-chart3"), {
+     type: 'bar',
+     data: {
+       labels: {{ dataset.barchart3_labels | safe }},
+       datasets: [
+        {
+          label: "Pré-avisos de Greve",
+          data: {{ dataset.barchart3_data | safe }},
+          backgroundColor: '#228B22' // green
+        }
+      ]
+    },
+    options: {
+      legend: { display: false,
+                labels: {
+                  fontSize: 10
+                }
+               },
+      scales: [{
+        xAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: 'year'
+          }
+        }],
+        yAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: 'strike notices'
+          }
+        }]
+      }]
+    }
+    });
+
+    var org_irct_chart = new Chart(document.getElementById("bar-chart4"), {
+      type: 'bar',
+      data: {
+       labels: {{ dataset.barchart4_labels | safe }},
+       datasets: [
+        {
+          label: "Atos de negociação coletiva",
+          data: {{ dataset.barchart4_data | safe }},
+          backgroundColor: '#0000FF' // green
+        }
+      ]
+    },
+    options: {
+      legend: { display: false,
+                labels: {
+                  fontSize: 10
+                }
+               },
+      scales: [{
+        xAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: 'year'
+          }
+        }],
+        yAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: 'ircts'
+          }
+        }]
+      }]
+    }
+    });
+
+    var setores = {{ dataset.barchart5_labels | safe }};
+    var setores_red = {{ dataset.barchart5_labels_red | safe }};
+    var pos = 0;
+    var setores_final = {};
+    for(pos = 0; pos < setores.length; pos++) { setores_final[setores_red[pos]] = setores[pos]; }
+
+    </script>
+
+</body>
+</html>

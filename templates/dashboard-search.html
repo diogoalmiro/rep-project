@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<head>
+  	<title>DOT - Dados das Organizações do Trabalho</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/dropdown.css') }}" />
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/tables.css') }}" />
+    <script src="{{ url_for('static', filename='js/jquery-1.11.0.min.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</head>
+<body>
+    <div class="container" style="text-align:center;">
+        <div class="text-center p-1">
+          <img width="170px" src="{{ url_for('static', filename='img/dgert-logo.png') }}">
+          <img width="170px" src="{{ url_for('static', filename='img/rep-logo.png') }}">
+          <h5>DOT - Dados das Organizações do Trabalho</h5>
+        </div>
+        <form class="form-inline" id="form1">
+            <div class="form-row">
+                <div class="input-group col-3">
+                    <select class="form-control" name="table_org">
+                        <option value="">Todas as Organizações</option>
+                        <option value="Unions" {{ 'selected' if search['table']=="Unions" }}>Sindicais</option>
+                        <option value="Employees" {{ 'selected' if search['table']=="Employees" }}>Empregadores</option>
+                    </select>
+                </div>
+                <div class="input-group col-6">
+                    <label for="org" class="form-text">Termo/acrónimo:&nbsp;</label>
+                    <input class="form-control" placeholder="Insira termo ou acrónimo" id="org" name="organization"
+                        value="{{ search['term'] }}" />
+                </div>
+                <div class="input-group col-3">
+                    <label class="form-text" for="distrito">Distrito:&nbsp;</label>
+                    <input class="form-control" placeholder="Insira distrito" id="distrito" name="distrito"
+                        value="{{ search['distrito'] }}" />
+                </div>
+                <div class="input-group col-3">
+                    <label for="setor">Setor:&nbsp;</label>
+                    <input class="form-control" placeholder="Insira setor económico" id="setor" name="setor"
+                        value="{{ search['setor'] }}" />
+                </div>
+                <div class="input-group col-3">
+                    <label class="form-text" for="distrito">Ano de início:&nbsp;</label>
+                    <select class="form-control" placeholder="Ano de início" id="ano-inicio" name="ano-inicio">
+                        <option value="">Selecionar...</option>
+                        {% for i in range(1977, date.today().year+1)%}
+                        <option value="{{i}}" {{ 'selected' if search['inicio'] == i }}>{{i}}</option>
+                        {%endfor%}
+                    </select>
+                </div>
+                <div class="input-group col-3">
+                    <label class="form-text" for="distrito">Ano de fim:&nbsp;</label>
+                    <select class="form-control" placeholder="Ano de fim" id="ano-fim" name="ano-fim">
+                        <option value="">Selecionar...</option>
+                        {% for i in range(1977, date.today().year+1)%}
+                        <option value="{{i}}" {{ 'selected' if search['fim']==i }}>{{i}}</option>
+                        {%endfor%}
+                    </select>
+                </div>
+                <button class="btn btn-primary col-3" type="submit">Pesquisar</button>
+            </div>
+        </form>
+        <nav class="justify-content-center p-3">
+                {% if (search['page'] or 0) > 0 %}
+                <a href="?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ search['page']-1 }}">Pagina anterior</a>
+                {% else %}
+                <span>Pagina anterior</span>
+                {% endif %}
+                <span>&bull;</span>
+                <span>Página {{ (search['page'] or 0) + 1 }}</span>
+                <span>&bull;</span>
+                {% if not last_page %}
+                <a href="?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ (search['page'] or 0)+1 }}">Pagina seguinte</a>
+                {% else %}
+                <span>Pagina seguinte</span>
+                {% endif %}
+        </nav>
+        <table id="my_table" border="1">
+            <thead class="sticky-top">
+                <th>Tipo</th>
+                <th>Nome</th>
+                <th>Acrónimo</th>
+                <th>Distrito sede</th>
+                <th>Setor</th>
+                <th>Estado</th>
+            </thead>
+            <tbody>{% for row in results %}
+                <tr>{% for col in row %}<td>{{ col }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="6">Sem Mais Resultados...</td></tr>{% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6">
+                        <a href="{{ url_for('export') }}?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary" style="width: 100%; height: 100%;">Exportar todos os atributos para um ficheiro Excel</a>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    </div>
+    </div>
+    </div>
+
+    </div>
+</body>
+</html>

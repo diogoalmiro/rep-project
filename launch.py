@@ -117,7 +117,7 @@ def server_side_search():
     cursor = connection.execute("""
         SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, ifnull(Sector, ""), act2str(Activa)
         FROM Org_Patronal
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term)
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
         AND ifnull(Sector,"") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
@@ -126,7 +126,7 @@ def server_side_search():
         UNION
         SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, ifnull(Sector, ""), act2str(Activa)
         FROM Org_Sindical
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term)
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
         AND ifnull(Sector,"") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
@@ -169,7 +169,7 @@ def export():
     rows = connection.execute("""
         SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), ifnull(Sector, ""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
         FROM Org_Sindical
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term)
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
         AND ifnull(Sector, "") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
@@ -182,7 +182,7 @@ def export():
     rows = connection.execute("""
         SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), ifnull(Sector, ""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
         FROM Org_Patronal
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term)
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
         AND ifnull(Sector, "") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio

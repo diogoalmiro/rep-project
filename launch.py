@@ -216,6 +216,16 @@ def export():
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Avisos de Greve", index=False)
 
+    col_names = ["Código Entidade Ativa","Data Entrada","Entidade Patronal","Entidade Sindical","CAE","Setor","Início","Fim","Duração","Dias","Observações"]
+    rows = connection.execute("""
+            SELECT [Código Entidade Ativa], [Data Entrada], [Entidade Patronal], [Entidade Sindical], [CAE], [Setor], [Início], [Fim], [Duração], [Dias], [Observações]
+              FROM Avisos_Greve_New
+    """, sqlformat).fetchall()
+    df = pd.DataFrame(filter(lambda x: any(map(lambda y: y.strip() in IDS , x[0].split("/"))) if x[0] else False , list(rows)), columns=col_names)
+    df["Data Entrada"] = pd.to_datetime(df["Data Entrada"], errors="coerce")
+    df["Início"] = pd.to_datetime(df["Início"], errors="coerce")
+    df["Fim"] = pd.to_datetime(df["Fim"], errors="coerce")
+    df.to_excel(excel_writer, sheet_name="Avisos de Greve (Novo)", index=False)
 
     col_names = ["Código Identificador da Organização", "Nome da Organização", "Ano", "Número", "Série", "URL para BTE"]
     rows = connection.execute("""

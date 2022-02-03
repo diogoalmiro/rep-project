@@ -208,24 +208,25 @@ def export():
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Negociação Coletiva", index=False)
 
-    col_names = ["Código Identificador da Organização", "Nome da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim"]
+    col_names = ["_id_greve", "ID Organização Sindical", "Nome da Organização Sindical", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"]
     rows = connection.execute("""
-            SELECT Avisos_Greve.Id_Entidade_Sindical, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim 
-              FROM Avisos_Greve, Org_Sindical
-             WHERE Avisos_Greve.Id_Entidade_Sindical = Org_Sindical.ID
-    """, sqlformat).fetchall()
-    pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Avisos de Greve", index=False)
-
-    col_names = ["Código Entidade Ativa","Data Entrada","Entidade Patronal","Entidade Sindical","CAE","Setor","Início","Fim","Duração","Dias","Observações"]
-    rows = connection.execute("""
-            SELECT [Código Entidade Ativa], [Data Entrada], [Entidade Patronal], [Entidade Sindical], [CAE], [Setor], [Início], [Fim], [Duração], [Dias], [Observações]
+            SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Sindical.ID, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
               FROM Avisos_Greve_New
+              JOIN Avisos_Greve_Participante_Sindical
+              JOIN Org_Sindical
+             WHERE Avisos_Greve_Participante_Sindical.Id_Entidade_Sindical = Org_Sindical.ID
+               AND Avisos_Greve_Participante_Sindical.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
+          ORDER BY Avisos_Greve_New.ID_Aviso_Greve
     """, sqlformat).fetchall()
-    df = pd.DataFrame(filter(lambda x: any(map(lambda y: y.strip() in IDS , x[0].split("/"))) if x[0] else False , list(rows)), columns=col_names)
-    df["Data Entrada"] = pd.to_datetime(df["Data Entrada"], errors="coerce")
-    df["Início"] = pd.to_datetime(df["Início"], errors="coerce")
-    df["Fim"] = pd.to_datetime(df["Fim"], errors="coerce")
-    df.to_excel(excel_writer, sheet_name="Avisos de Greve (Novo)", index=False)
+    pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Avisos de Greve", index=False)
+
+    #col_names = ["Código Identificador da Organização", "Nome da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim"]
+    #rows = connection.execute("""
+    #        SELECT Avisos_Greve.Id_Entidade_Sindical, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim 
+    #          FROM Avisos_Greve, Org_Sindical
+    #         WHERE Avisos_Greve.Id_Entidade_Sindical = Org_Sindical.ID
+    #""", sqlformat).fetchall()
+    #pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Avisos de Greve (Antigo)", index=False)
 
     col_names = ["Código Identificador da Organização", "Nome da Organização", "Ano", "Número", "Série", "URL para BTE"]
     rows = connection.execute("""

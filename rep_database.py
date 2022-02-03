@@ -6,6 +6,7 @@ import sqlite3
 import os
 import re
 from datetime import datetime
+import greves
 
 #com autenticacao
 def getResponse(tabela, ano):
@@ -1815,29 +1816,31 @@ def repDatabase():
 
 	stats = {}
 
-	cursorObj = cursor.execute("SELECT * FROM Org_Sindical;") 
+	cursorObj = cursor.execute("SELECT count() FROM Org_Sindical;") 
 
-	stats['Org Sindicais'] = len(cursorObj.fetchall())
+	stats['Org Sindicais'] = cursorObj.fetchone()[0]
 
-	cursorObj = cursor.execute("SELECT * FROM Org_Patronal;")
+	cursorObj = cursor.execute("SELECT count() FROM Org_Patronal;")
 
-	stats['Org Patronais'] = len(cursorObj.fetchall())
+	stats['Org Patronais'] = cursorObj.fetchone()[0]
 
-	cursorObj = cursor.execute("SELECT * FROM Outorgantes_Actos;")
+	cursorObj = cursor.execute("SELECT count() FROM Outorgantes_Actos;")
 
-	stats['Actos Outorgantes'] = len(cursorObj.fetchall())
+	stats['Actos Outorgantes'] = cursorObj.fetchone()[0]
 
-	cursorObj = cursor.execute("SELECT * FROM Actos_Eleitorais_Org_Sindical;")
+	cursorObj = cursor.execute("SELECT count() FROM Actos_Eleitorais_Org_Sindical;")
 
-	stats['Actos Eleitorais Org Sindicais'] = len(cursorObj.fetchall())
+	stats['Actos Eleitorais Org Sindicais'] = cursorObj.fetchone()[0]
 
-	cursorObj = cursor.execute("SELECT * FROM Actos_Negociacao_Colectiva;")
+	cursorObj = cursor.execute("SELECT count() FROM Actos_Negociacao_Colectiva;")
 
-	stats['Actos Negociação Colectiva'] = len(cursorObj.fetchall())
+	stats['Actos Negociação Colectiva'] = cursorObj.fetchone()[0]
 
 	connection.commit()
 
 	connection.close()
+
+	greves.main()
 
 	return stats
 

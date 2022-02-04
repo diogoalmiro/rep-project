@@ -104,14 +104,14 @@ class RepDataset:
     #avisosGreveAnos
     @property
     def barchart3_labels(self): # x
-        cursor = self.query("SELECT Ano_Inicio as Ano, COUNT(*) as NUM_GREVES FROM Avisos_Greve WHERE ANO >= 1996 GROUP BY Ano_Inicio")
+        cursor = self.query("SELECT Ano_Inicio as Ano, COUNT(*) as NUM_GREVES FROM Avisos_Greve_New WHERE ANO >= 1996 GROUP BY Ano_Inicio")
         return [row[0] for row in cursor.fetchall()]
 
     
     #avisosGreve
     @property
     def barchart3_data(self): # x
-        cursor = self.query("SELECT Ano_Inicio as Ano, COUNT(*) as NUM_GREVES FROM Avisos_Greve WHERE ANO >= 1996 GROUP BY Ano_Inicio")
+        cursor = self.query("SELECT Ano_Inicio as Ano, COUNT(*) as NUM_GREVES FROM Avisos_Greve_New WHERE ANO >= 1996 GROUP BY Ano_Inicio")
         return [row[1] for row in cursor.fetchall()]
 
     

@@ -68,24 +68,11 @@ threading.Timer(86400, regular_update).start()
 # Create a new flask web server
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-
-dataset = rep_dataset.RepDataset(DATABASE_NAME)
-
-@app.context_processor
-def _general():
-    global dataset
-    return {
-        'dataset': dataset,
-        'date': date
-    }
+app.config['JSON_AS_ASCII'] = False
 
 @app.route("/")
 def index():
     return send_file("static/index.html")
-
-@app.route("/dashboard/")
-def dashboard():
-    return render_template("dashboard.html")
 
 ROWS_PER_PAGE = 50
 
@@ -137,7 +124,7 @@ def server_side_search():
     for row in cursor.fetchall():
         results.append(list(row))
 
-    return render_template("dashboard-search.html", results=results, search=search, last_page=len(results) < ROWS_PER_PAGE)
+    return render_template("dashboard-search.html", results=results, search=search, last_page=len(results) < ROWS_PER_PAGE, date=date)
 
 @app.route("/export/")
 def export():
@@ -220,14 +207,6 @@ def export():
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Avisos de Greve", index=False)
 
-    #col_names = ["Código Identificador da Organização", "Nome da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim"]
-    #rows = connection.execute("""
-    #        SELECT Avisos_Greve.Id_Entidade_Sindical, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim 
-    #          FROM Avisos_Greve, Org_Sindical
-    #         WHERE Avisos_Greve.Id_Entidade_Sindical = Org_Sindical.ID
-    #""", sqlformat).fetchall()
-    #pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Avisos de Greve (Antigo)", index=False)
-
     col_names = ["Código Identificador da Organização", "Nome da Organização", "Ano", "Número", "Série", "URL para BTE"]
     rows = connection.execute("""
             SELECT ID_Organizacao_Sindical, Org_Sindical.Nome, Ano, Numero, Serie, URL
@@ -252,5 +231,52 @@ def export():
             download_name='data-export_%s.xlsx' % datetime.now().strftime("%Y-%m-%d-%H_%M_%S"),
             as_attachment=True)
 
+@app.route("/org_sindical_by_year", methods=['GET'])
+def org_sindical_by_year():
+    connection = sqlite3.connect(DATABASE_NAME)
+    results = []
+    for ano in range(1996, date.today().year + 1):
+        cursor = connection.execute("""
+            SELECT Tipo, COUNT() As Count 
+            FROM Org_Sindical 
+            WHERE
+                :ano >= cast(strftime("%Y", Data_Primeira_Actividade) as number) 
+                AND (Activa = 1 OR :ano <= cast(strftime("%Y", Data_Ultima_actividade) as number) )
+            GROUP BY Tipo""", {"ano": ano})
+        curr_obj = {
+            'ano': ano,
+            'CONFEDERAÇÃO SINDICAL': 0,
+            'FEDERAÇÃO SINDICAL': 0,
+            'SINDICATO': 0,
+            'UNIÃO SINDICAL': 0
+        }
+        for row in cursor.fetchall():
+            curr_obj[row[0]] = row[1]
+        results.append(curr_obj)
+    return jsonify(results)
+
+@app.route("/org_patronal_by_year", methods=['GET'])
+def org_patronal_by_year():
+    connection = sqlite3.connect(DATABASE_NAME)
+    results = []
+    for ano in range(1996, date.today().year + 1):
+        cursor = connection.execute("""
+            SELECT Tipo, COUNT() As Count 
+            FROM Org_Patronal 
+            WHERE
+                :ano >= cast(strftime("%Y", Data_Primeira_Actividade) as number) 
+                AND (Activa = 1 OR :ano <= cast(strftime("%Y", Data_Ultima_actividade) as number) )
+            GROUP BY Tipo""", {"ano": ano})
+        curr_obj = {
+            'ano': ano,
+            'CONFEDERAÇÃO PATRONAL': 0,
+            'FEDERAÇÃO PATRONAL': 0,
+            'ASSOCIAÇÂO PATRONAL': 0,
+            'UNIÃO PATRONAL': 0
+        }
+        for row in cursor.fetchall():
+            curr_obj[row[0]] = row[1]
+        results.append(curr_obj)
+    return jsonify(results)
 
 app.run(host="0.0.0.0", port=8080)

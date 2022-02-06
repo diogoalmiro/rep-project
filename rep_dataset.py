@@ -71,13 +71,6 @@ class RepDataset:
     def barchart2_data4(self): #x
         cursor = self.query("SELECT ANO, TIPO, COUNT(DISTINCT SUBSTR(ID,0,INSTR(ID,'.')+1) || SUBSTR(SUBSTR(ID,INSTR(ID,'.')+1,LENGTH(ID)) ,0,INSTR(SUBSTR(ID,INSTR(ID,'.')+1,LENGTH(ID)),'.'))) AS NUM_ORG FROM Org_Patronal, ( SELECT DISTINCT CAST(strftime('%Y',date(Data_Primeira_Actividade)) AS DECIMAL) AS Ano FROM Org_Patronal WHERE Data_Primeira_Actividade IS NOT NULL AND Ano >= 1977 UNION SELECT DISTINCT CAST(strftime('%Y',date(Data_Ultima_Actividade)) AS DECIMAL) AS Ano FROM Org_Patronal WHERE Data_Primeira_Actividade IS NOT NULL) AS ANOS WHERE CAST(strftime('%Y',date(Data_Primeira_Actividade)) AS DECIMAL) <= ANO AND (Activa = 1 OR CAST(strftime('%Y',date(Data_Ultima_Actividade)) AS DECIMAL) >= ANO) GROUP BY ANO, TIPO HAVING ANO >= 1996")
         return [row[2] for row in cursor.fetchall() if row[1].startswith('UNI')]    
-
-    
-    
-    
-    
-    
-    
     
     #choroplethMapDistritos
     @property
@@ -100,6 +93,11 @@ class RepDataset:
                 lista.append(row[1])
         
         return lista
+    
+    @property
+    def map_data_new(self): # x
+        cursor = self.query("SELECT Distrito_Sede, COUNT(ID) as NUM_ORG FROM Org_Sindical WHERE Activa=1 AND Distrito_Sede != '' GROUP BY Distrito_Sede")
+        return {row[0]: row[1] for row in cursor.fetchall()}
 
     #avisosGreveAnos
     @property
@@ -113,6 +111,10 @@ class RepDataset:
     def barchart3_data(self): # x
         cursor = self.query("SELECT Ano_Inicio as Ano, COUNT(*) as NUM_GREVES FROM Avisos_Greve_New WHERE ANO >= 1996 GROUP BY Ano_Inicio")
         return [row[1] for row in cursor.fetchall()]
+    
+    def barchart3_labels_data():
+        cursor = self.query("SELECT Ano_Inicio as Ano, COUNT(*) as NUM_GREVES FROM Avisos_Greve_New WHERE ANO >= 1996 GROUP BY Ano_Inicio")
+        return [list(row) for row in cursor.fetchall()]
 
     
     #orgSindicaisAtivasPorSector

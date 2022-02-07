@@ -17,11 +17,11 @@
 	<div class="container">
 		<nav class="navbar navbar-light navbar-expand h4 p-3">
 			<ul class="navbar-nav align-items-baseline">
-				<li class="nav-item active pr-4">
-					<a class="nav-link" href="/"><h3>DOT</h3></a>
+				<li class="nav-item active pr-2 mr-5">
+					<a class="nav-link" href="/"><h2>DOT</h2></a>
 				</li>
 				<li class="nav-item active">
-					<a class="nav-link" href="/">Entrada</a>
+					<a class="nav-link mx-2" href="/">Apresentação</a>
 				</li>
 				<li class="nav-item">
 					<a class="nav-link" href="/dashboard-search/">Pesquisa</a>
@@ -50,28 +50,28 @@
 			<p>
 				Para acesso aos dados das organizações sindicais e de empregadores, a DOT permite efetuar pesquisa por (uma ou mais opções em simultâneo):
 				<ul>
-					<li>Tipo de Organização</li>
+					<li>Tipo de organização</li>
 					<li>Termo ou acrónimo</li>
-					<li>Distrito da Sede</li>
+					<li>Distrito da sede</li>
 					<li>Ano de início e de fim da atividade</li>
 				</ul>
-				Com a pesquisa, obtem-se uma listagem no final da qual pode-se escolher "Export resultados em Excel". Deste modo, acede-se aos atributos fornecidos na pesquisa assim como a outros eventualmente disponíveis, designadamente sobre:
+				Com a pesquisa, obtem-se uma listagem no final da qual pode-se escolher "Exportar resultados em Excel". Deste modo, acede-se aos atributos fornecidos na pesquisa assim como a outros eventualmente disponíveis, designadamente sobre:
 				<ul>
-					<li>Negociação Coletiva (dede 1996)</li>
-					<li>Avisos de Greve (desde 2013)</li>
-					<li>Mudanças de Estatuto</li>
+					<li>Negociação coletiva (dede 1996)</li>
+					<li>Avisos de greve (desde 2013)</li>
+					<li>Mudanças de estatuto</li>
 					<li>Eleições</li>
 				</ul>
 			</p>
 		</div>
-		<hr>
-		<div class="row">
+		<div class="row mt-4">
+			<small>A DOT reporta-se aos dados das organizações do trabalho portuguesas que aqui se apresentam na sua totalidade em dois gráficos:</small>
 			<div class="col-6 text-center">
-				<h6>Organizaçoes Sindicais por Ano</h6>
+				<span>Organizaçoes sindicais por ano e tipo</span>
 				<canvas id="org_sindical_year"></canvas>
 			</div>
 			<div class="col-6 text-center">
-				<h6>Organizaçoes de Empregadores por Ano</h6>
+				<span>Organizaçoes de empregadores por ano e tipo</span>
 				<canvas id="org_patronal_year"></canvas>
 			</div>
 		</div>
@@ -126,8 +126,8 @@
 									}
 								},
 						scales: {
-							xAxes: [{ stacked: true }],
-							yAxes: [{ stacked: true }]
+							xAxes: [{ stacked: true, gridLines: { display: false } }],
+							yAxes: [{ stacked: true, gridLines: { display: false }  }]
 						}
 					}
 				}))
@@ -148,8 +148,8 @@
 									}
 								},
 						scales: {
-							xAxes: [{ stacked: true }],
-							yAxes: [{ stacked: true }]
+							xAxes: [{ stacked: true, gridLines: { display: false }  }],
+							yAxes: [{ stacked: true, gridLines: { display: false }  }]
 						}
 					}
 				}))

@@ -17,11 +17,11 @@
     <div class="container" style="text-align:center;">
         <nav class="navbar navbar-light navbar-expand h4 p-3">
 			<ul class="navbar-nav align-items-baseline">
-				<li class="nav-item active pr-4">
-					<a class="nav-link" href="/"><h3>DOT</h3></a>
+				<li class="nav-item active pr-2 mr-5">
+					<a class="nav-link" href="/"><h2>DOT</h2></a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link" href="/">Entrada</a>
+					<a class="nav-link mx-1" href="/">Apresentação</a>
 				</li>
 				<li class="nav-item active">
 					<a class="nav-link" href="/dashboard-search/">Pesquisa</a>
@@ -31,7 +31,7 @@
         <form class="form-inline" id="form1">
             <div class="form-row">
                 <div class="input-group col-4">
-                    <label for="table_org" class="form-text">Tipo de Organização:&nbsp;</label>
+                    <label for="table_org" class="form-text">Tipo de organização:&nbsp;</label>
                     <select class="form-control" name="table_org" id="table_org">
                         <option value="">Selecionar...</option>
                         <option value="Unions" {{ 'selected' if search['table']=="Unions" }}>Sindicais</option>
@@ -40,19 +40,14 @@
                 </div>
                 <div class="input-group col-5">
                     <label for="org" class="form-text">Termo ou acrónimo:&nbsp;</label>
-                    <input class="form-control" placeholder="Insira termo ou acrónimo" id="org" name="organization"
+                    <input class="form-control" placeholder="Inserir..." id="org" name="organization"
                         value="{{ search['term'] }}" />
                 </div>
                 <div class="input-group col-3">
                     <label class="form-text" for="distrito">Distrito:&nbsp;</label>
-                    <input class="form-control" placeholder="Insira distrito" id="distrito" name="distrito"
+                    <input class="form-control" placeholder="Inserir..." id="distrito" name="distrito"
                         value="{{ search['distrito'] }}" />
                 </div>
-                <!--<div class="input-group col-3">
-                    <label for="setor">Setor:&nbsp;</label>
-                    <input class="form-control" placeholder="Insira setor económico" id="setor" name="setor"
-                        value="{{ search['setor'] }}" />
-                </div>-->
                 <div class="input-group col-4">
                     <label class="form-text" for="distrito">Ano de início:&nbsp;</label>
                     <select class="form-control" placeholder="Ano de início" id="ano-inicio" name="ano-inicio">
@@ -75,7 +70,7 @@
             </div>
         </form>
         <nav class="justify-content-center p-3 d-flex justify-content-between align-items-center">
-                <a href="{{ url_for('server_side_search')}}" class="btn btn-primary">Nova Pesquisa</a>
+                <a href="{{ url_for('server_side_search')}}" class="btn btn-primary">Nova pesquisa</a>
                 <div>
                     {% if (search['page'] or 0) > 0 %}
                     <a href="?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ search['page']-1 }}">Pagina anterior</a>
@@ -99,7 +94,6 @@
                 <th>Nome</th>
                 <th>Acrónimo</th>
                 <th>Distrito sede</th>
-                <th>Setor</th>
                 <th>Estado</th>
             </thead>
             <tbody>{% for row in results %}
@@ -107,7 +101,7 @@
             </tbody>
         </table>
         <nav class="justify-content-center p-3 d-flex justify-content-between align-items-center">
-            <a href="{{ url_for('server_side_search')}}" class="btn btn-primary">Nova Pesquisa</a>
+            <a href="{{ url_for('server_side_search')}}" class="btn btn-primary">Nova pesquisa</a>
             <div>
                 {% if (search['page'] or 0) > 0 %}
                 <a href="?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ search['page']-1 }}">Pagina anterior</a>

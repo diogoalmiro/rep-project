@@ -68,7 +68,7 @@ threading.Timer(86400, regular_update).start()
 # Create a new flask web server
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-app.config['JSON_AS_ASCII'] = False
+#app.config['JSON_AS_ASCII'] = False
 
 @app.route("/")
 def index():
@@ -102,7 +102,7 @@ def server_side_search():
     connection = sqlite3.connect(DATABASE_NAME)
     connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta", deterministic=True)
     cursor = connection.execute("""
-        SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, ifnull(Sector, ""), act2str(Activa)
+        SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, act2str(Activa)
         FROM Org_Patronal
         WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
@@ -111,7 +111,7 @@ def server_side_search():
         AND ifnull(Data_Ultima_Actividade,"0000-01-01") <= :fim
         AND :table NOT LIKE "Unions"
         UNION
-        SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, ifnull(Sector, ""), act2str(Activa)
+        SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, act2str(Activa)
         FROM Org_Sindical
         WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito

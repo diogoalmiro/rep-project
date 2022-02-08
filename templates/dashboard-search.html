@@ -86,7 +86,7 @@
                     <span>Pagina seguinte</span>
                     {% endif %}
                 </div>
-                <a href="{{ url_for('export') }}?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary">Exportar resultados em Excel</a>
+                <a target="_blank" href="{{ url_for('export') }}?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary">Exportar resultados em Excel</a>
         </nav>
         <table id="my_table" border="1">
             <thead class="sticky-top">
@@ -97,7 +97,7 @@
                 <th>Estado</th>
             </thead>
             <tbody>{% for row in results %}
-                <tr>{% for col in row %}<td>{{ col }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="6">Sem Mais Resultados...</td></tr>{% endfor %}
+                <tr>{% for col in row %}<td>{{ col }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="6">Sem mais resultados...</td></tr>{% endfor %}
             </tbody>
         </table>
         <nav class="justify-content-center p-3 d-flex justify-content-between align-items-center">
@@ -117,7 +117,7 @@
                 <span>Pagina seguinte</span>
                 {% endif %}
             </div>
-            <a href="{{ url_for('export') }}?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary">Exportar resultados em Excel</a>
+            <a target="_blank" href="{{ url_for('export') }}?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary">Exportar resultados em Excel</a>
     </nav>
     </div>
     </div>

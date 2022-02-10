@@ -49,19 +49,12 @@
 				<li>Mudanças de estatuto</li>
 				<li>Eleições</li>
 			</ul>
+			<p class="mb-1">
+				Os dois gráficos seguintes resumem os dados atuais na DOT:
 			</p>
-		</div>
-		<div class="row mt-4 pb-3 mb-2">
-			<div class="col-12">
-				<small>Os dois gráficos seguintes resumem os dados atuais na DOT:</small>
-			</div>
-			<div class="col-12 col-md-6 text-center">
-				<span>Organizaçoes sindicais por ano e tipo</span>
-				<canvas id="org_sindical_year"></canvas>
-			</div>
-			<div class="col-12 col-md-6 text-center">
-				<span>Organizaçoes de empregadores por ano e tipo</span>
-				<canvas id="org_patronal_year"></canvas>
+			<div class="row">
+				<canvas class="col-12 col-md-6" id="org_sindical_year"></canvas>
+				<canvas class="col-12 col-md-6" id="org_patronal_year"></canvas>
 			</div>
 		</div>
 		<div class="text-justify">
@@ -101,16 +94,16 @@
 			}
 
 			let sublabelPatronal = {
-				"CONFEDERAÇÃO PATRONAL": "Confederações",
-				"FEDERAÇÃO PATRONAL": "Federações",
-				"ASSOCIAÇÃO PATRONAL": "Associações",
-				"UNIÃO PATRONAL": "Uniões"
+				"CONFEDERAÇÃO DE EMPREGADORES": "Confederações",
+				"FEDERAÇÃO DE EMPREGADORES": "Federações",
+				"ASSOCIAÇÃO DE EMPREGADORES": "Associações",
+				"UNIÃO DE EMPREGADORES": "Uniões"
 			}
 			let sublabelPatronalColor = {
-				"CONFEDERAÇÃO PATRONAL": "#228B22",
-				"FEDERAÇÃO PATRONAL": "#FFD700",
-				"ASSOCIAÇÃO PATRONAL": "#FF0000",
-				"UNIÃO PATRONAL": "#0000FF"
+				"CONFEDERAÇÃO DE EMPREGADORES": "#228B22",
+				"FEDERAÇÃO DE EMPREGADORES": "#FFD700",
+				"ASSOCIAÇÃO DE EMPREGADORES": "#FF0000",
+				"UNIÃO DE EMPREGADORES": "#0000FF"
 			}
 
 			fetch("/org_sindical_by_year").then(r => r.json()).then(data => new Chart(document.getElementById("org_sindical_year"), {
@@ -124,6 +117,10 @@
 						}))
 					},
 					options: {
+						title: {
+							display: true,
+							text: 'Organizações sindicais por ano e tipo'
+						},
 						legend: { display: true,
 									labels: {
 									fontSize: 10
@@ -146,6 +143,10 @@
 						}))
 					},
 					options: {
+						title: {
+							display: true,
+							text: 'Organizações de empregadores por ano e tipo'
+						},
 						legend: { display: true,
 									labels: {
 									fontSize: 10

@@ -244,61 +244,6 @@ def processos(cursor):
 		getTable_Processos(ano,cursor)
 
 
-def avisos_Greve(cursor):
-	cursor.execute("""CREATE TABLE TEMP_AVISOS_GREVE1 (
-		[Nº Entrada] INT,
-		[Data entrada] VARCHAR(100),
-		[Entidade Sindical] VARCHAR(100),
-		[Entidade Patronal] VARCHAR(100),
-		CAE VARCHAR(100),
-		NIF VARCHAR(9),
-		Designação VARCHAR(100),
-		Início VARCHAR(100),
-		Fim VARCHAR(100),
-		Observações VARCHAR(100),
-		ANO INT,
-		MÊS INT
-	);""")
-
-	cursor.execute("""CREATE TABLE TEMP_AVISOS_GREVE2 (
-		[Nº GREVE] VARCHAR(100),
-		[DATA ENTRADA] VARCHAR(100),
-		SINDICATO VARCHAR(100),
-		EMPREGADOR VARCHAR(100),
-		CAE VARCHAR(100),
-		NIF VARCHAR(9),
-		SETOR VARCHAR(100),
-		DIAS INT,
-		DURAÇÃO VARCHAR(100),
-		OBSERVAÇÕES VARCHAR(100),
-		ANO INT,
-		MÊS INT
-
-	);""")
-
-	with open('./CSV-files/AVISOS_GREVE_2013_2014.csv','r', encoding="utf8") as fin:
-		# csv.DictReader uses first line in file for column headings by default
-		dr = csv.DictReader(fin)
-		to_db = []
-		for i in dr:
-			values = list(i.values())
-			to_db.append((values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7],values[8],values[9],values[10],values[11]))
-
-	cursor.executemany("""INSERT INTO TEMP_AVISOS_GREVE1 ("Nº Entrada","Data entrada","Entidade Sindical","Entidade Patronal","CAE","NIF","Designação","Início","Fim","Observações","ANO","MÊS") VALUES (?,?,?,?,?,?,?,?,?,?,?,?);""", to_db)
-		
-
-	with open('./CSV-files/AVISOS_GREVE_2015_2019.csv','r', encoding="utf8") as fin:
-		# csv.DictReader uses first line in file for column headings by default
-		dr = csv.DictReader(fin) # comma is default delimiter
-		to_db = []
-		for i in dr:
-			values = list(i.values())
-			to_db.append((values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7],values[8],values[9],values[10],values[11]))
-    
-
-	cursor.executemany("""INSERT INTO TEMP_AVISOS_GREVE2 ("Nº GREVE","DATA ENTRADA","SINDICATO","EMPREGADOR","CAE","NIF","SETOR","DIAS","DURAÇÃO","OBSERVAÇÕES","ANO","MÊS") VALUES (?,?,?,?,?,?,?,?,?,?,?,?);""", to_db)	
-
-
 def municipios_codigosPostais(cursor):
 	cursor.execute("""CREATE TABLE TEMP_MUNICIPIOS( 
 		DD VARCHAR(2),
@@ -691,11 +636,7 @@ def repDatabase():
 	cursor.execute("DROP TABLE IF EXISTS TEMP_PROCESSOS;")
 	cursor.execute("DROP TABLE IF EXISTS TEMP_IRCT;")
 	cursor.execute("DROP TABLE IF EXISTS TEMP_OUTORGANTES;")
-	cursor.execute("DROP TABLE IF EXISTS TEMP_AVISOS_GREVE1;")
-	cursor.execute("DROP TABLE IF EXISTS TEMP_AVISOS_GREVE2;")
 	cursor.execute("DROP TABLE IF EXISTS TEMP_MESES_NUMERO;")
-	cursor.execute("DROP TABLE IF EXISTS TEMP_AVISOS_GREVE;")
-	cursor.execute("DROP TABLE IF EXISTS TEMP_AVISOS_GREVE_2;")
 	cursor.execute("DROP TABLE IF EXISTS TEMP_WEBSITES_SINDICAIS;")
 	cursor.execute("DROP TABLE IF EXISTS TEMP_WEBSITES_PATRONAIS;")
 
@@ -827,7 +768,6 @@ def repDatabase():
 	ircts(cursor)
 	outorgantes(cursor)
 	processos(cursor)
-	avisos_Greve(cursor)
 	websites(cursor)
 
 
@@ -1021,6 +961,7 @@ def repDatabase():
 	cursor.execute("UPDATE TEMP_ENTIDADES SET NOME_ENTIDADE = replace(NOME_ENTIDADE,'TECNOLOG. ','TECNOLOGIAS ')  WHERE instr(NOME_ENTIDADE, 'TECNOLOG. ') > 0;")
 	cursor.execute("UPDATE TEMP_ENTIDADES SET NOME_ENTIDADE = replace(NOME_ENTIDADE,'INST. ','INSTITUTO ')  WHERE instr(NOME_ENTIDADE, 'INST. ') > 0;")
 	cursor.execute("UPDATE TEMP_ENTIDADES SET NOME_ENTIDADE = replace(NOME_ENTIDADE,'ASS ','ASSOCIAÇÃO ')  WHERE instr(NOME_ENTIDADE, 'ASS ') > 0;")
+	cursor.execute("UPDATE TEMP_ENTIDADES SET NOME_ENTIDADE = replace(NOME_ENTIDADE,'ASS.OCIAÇÃO','ASSOCIAÇÃO ')  WHERE instr(NOME_ENTIDADE, 'ASS.OCIAÇÃO') > 0;")
 	cursor.execute("UPDATE TEMP_ENTIDADES SET NOME_ENTIDADE = replace(NOME_ENTIDADE,'E IMP. ','E IMPORTADORES ')  WHERE instr(NOME_ENTIDADE, 'E IMP. ') > 0;")
 	cursor.execute("UPDATE TEMP_ENTIDADES SET NOME_ENTIDADE = replace(NOME_ENTIDADE,'CONF. ','CONFEDERAÇÃO ')  WHERE instr(NOME_ENTIDADE, 'CONF. ') > 0;")
 	cursor.execute("UPDATE TEMP_ENTIDADES SET NOME_ENTIDADE = replace(NOME_ENTIDADE,'DOS COMERC. ','DOS COMERCIANTES ')  WHERE instr(NOME_ENTIDADE, 'DOS COMERC. ') > 0;")
@@ -1387,301 +1328,6 @@ def repDatabase():
 		("Jan", "jan", "01"),("Feb", "fev", "02"),("Mar", "mar", "03"),("Apr", "abr", "04"),("May", "mai", "05"),("Jun", "jun", "06"),("Jul", "jul", "07"),("Aug", "ago", "08"),("Sep", "set", "09"),("Oct", "out", "10"),
 		("Nov", "nov", "11"),("Dec", "dez", "12");""")
 
-	cursor.execute("""CREATE TABLE TEMP_AVISOS_GREVE (
-		Id_Entidade_Sindical      VARCHAR(10),
-		Ano_Inicio                INT,
-		Mes_Inicio                INT,
-		Entidade_Sindical         VARCHAR(100),
-		Entidade_Patronal         VARCHAR(100),
-		Ano_Fim                   INT,
-		Mes_Fim                   INT,
-		Duracao                   INT,
-		PRIMARY KEY(Id_Entidade_Sindical,Ano_Inicio,Mes_Inicio,Entidade_Sindical,Entidade_Patronal,Ano_Fim,Mes_Fim,Duracao),
-	  FOREIGN KEY (Id_Entidade_Sindical) REFERENCES Org_Sindical(ID)
-	);""")
-
-
-	cursor.execute("""CREATE TABLE TEMP_AVISOS_GREVE_2 (
-		Id_Entidade_Sindical      VARCHAR(10),
-		Ano_Inicio                INT,
-		Mes_Inicio                INT,
-		Entidade_Sindical         VARCHAR(100),
-		Entidade_Patronal         VARCHAR(100),
-		Ano_Fim                   INT,
-		Mes_Fim                   INT,
-		Duracao                   INT,
-		PRIMARY KEY(Id_Entidade_Sindical,Ano_Inicio,Mes_Inicio,Entidade_Sindical,Entidade_Patronal,Ano_Fim,Mes_Fim,Duracao),
-	  FOREIGN KEY (Id_Entidade_Sindical) REFERENCES Org_Sindical(ID)
-	);""")
-
-
-	#Popular a tabela avisos de greve com o 1º csv (avisos de greve de 2013 a 2014)
-	cursor.execute("""INSERT INTO TEMP_AVISOS_GREVE SELECT DISTINCT
-		NULL,
-		CASE
-			WHEN INSTR(Início,"DIAS") > 0 AND INSTR(Início, "de") > 0 THEN CAST(SUBSTR(Início,INSTR(Início,"de")+3,4) AS INTEGER)
-			WHEN INSTR(Início,"/") > 0 THEN CAST(SUBSTR(Início,INSTR(Início,"/")+4,4) AS INTEGER)
-			WHEN LENGTH(Início) = 9 AND SUBSTR(Início,8,2)="12" THEN CAST("20" || "13" AS INTEGER)
-			WHEN LENGTH(Início) = 9 AND SUBSTR(Início,8,2)!="12" THEN CAST("20" || SUBSTR(Início,8,2) AS INTEGER)
-			ELSE ANO
-		END AS Ano_Inicio,
-		CASE
-			WHEN INSTR(Início,"/") > 0 THEN CAST(SUBSTR(Início,INSTR(Início,"/")+1,2) AS INTEGER)
-			WHEN INSTR(Início, "-") > 0 AND LENGTH(Início) > 5 THEN CAST((SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,4,3)) AS INTEGER)
-			ELSE MÊS
-		END AS Mes_Inicio,
-		CASE
-			WHEN [Entidade Sindical] = "0" THEN NULL
-			WHEN [Entidade Sindical] = "6 Sindicatos" THEN NULL
-			WHEN INSTR([Entidade Sindical],";") > 0 AND INSTR([Entidade Sindical], "(") = 0 THEN REPLACE([Entidade Sindical], ";", " / ")
-			ELSE [Entidade Sindical]
-		END AS Entidade_Sindical,
-		CASE
-			WHEN [Entidade Patronal] = "0" THEN NULL
-			ELSE [Entidade Patronal]
-		END AS Entidade_Patronal,
-		CASE
-			WHEN INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 8 THEN CAST("20" || SUBSTR(Fim,7,2) AS INTEGER)
-			WHEN INSTR(Fim,"Empresas") = 0 AND LENGTH(Fim) = 10 THEN CAST(SUBSTR(Fim,7,4) AS INTEGER)
-			WHEN LENGTH(Fim) = 9 THEN CAST("20" || SUBSTR(Fim,8,2) AS INTEGER)
-			ELSE ANO
-		END AS Ano_Fim,
-		CASE
-			WHEN INSTR(Fim,"/") > 0 AND LENGTH(Fim) <= 6 THEN CAST((SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_PT = SUBSTR(Fim,INSTR(Fim,"/")+1,3)) AS INTEGER)
-			WHEN INSTR(Fim,"/") > 0 AND LENGTH(Fim) > 6 THEN CAST(SUBSTR(Fim,INSTR(Fim,"/")+1,2) AS INTEGER)
-			WHEN INSTR(Fim,"-") > 0 AND LENGTH(Fim) = 10 THEN CAST(SUBSTR(Fim,INSTR(Fim,"-")+1,2) AS INTEGER)
-			WHEN INSTR(Fim,"-") > 0 AND LENGTH(Fim) <= 9 THEN CAST((SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Fim,INSTR(Fim,"-")+1,3)) AS INTEGER)
-			ELSE MÊS
-		END AS Mes_Fim,
-		CASE
-			WHEN INSTR(Início,"/") > 0 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 5 THEN
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_PT = SUBSTR(Fim,INSTR(Fim,"/")+1,3)) || '-' || '0' || SUBSTR(Fim,1,1))
-					- julianday(SUBSTR(Início,INSTR(Início,"/")+4,4) || '-' || SUBSTR(Início,INSTR(Início,"/")+1,2) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"/") > 0 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 6 THEN
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_PT = SUBSTR(Fim,INSTR(Fim,"/")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday(SUBSTR(Início,INSTR(Início,"/")+4,4) || '-' || SUBSTR(Início,INSTR(Início,"/")+1,2) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"/") > 0 AND (INSTR(Fim,"/") > 0 OR INSTR(Fim, "-") > 0) AND LENGTH(Fim) = 10 THEN
-					julianday(SUBSTR(Fim,7,4) || '-' || SUBSTR(Fim,4,2) || '-' || SUBSTR(Fim,1,2))
-					- julianday(SUBSTR(Início,INSTR(Início,"/")+4,4) || '-' || SUBSTR(Início,INSTR(Início,"/")+1,2) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"/") > 0 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 8 THEN
-					julianday("20" || SUBSTR(Fim,7,2) || '-' || SUBSTR(Fim,4,2) || '-' || SUBSTR(Fim,1,2))
-					- julianday(SUBSTR(Início,INSTR(Início,"/")+4,4) || '-' || SUBSTR(Início,INSTR(Início,"/")+1,2) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"/") > 0 AND INSTR(Fim,"-") > 0 AND LENGTH(Fim) = 9 THEN
-					julianday("20" || SUBSTR(Fim,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Fim,INSTR(Fim,"-")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday(SUBSTR(Início,INSTR(Início,"/")+4,4) || '-' || SUBSTR(Início,INSTR(Início,"/")+1,2) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"/") > 0 AND INSTR(Fim,"-") > 0 AND LENGTH(Fim) = 6 THEN
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Fim,INSTR(Fim,"-")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday(SUBSTR(Início,INSTR(Início,"/")+4,4) || '-' || SUBSTR(Início,INSTR(Início,"/")+1,2) || '-' || SUBSTR(Início,1,2))
-
-			
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 6 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 5 THEN 
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_PT = SUBSTR(Fim,INSTR(Fim,"/")+1,3)) || '-' || '0' || SUBSTR(Fim,1,1))
-					- julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 9 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 5 THEN 
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_PT = SUBSTR(Fim,INSTR(Fim,"/")+1,3)) || '-' || '0' || SUBSTR(Fim,1,1))
-					- julianday("20" || SUBSTR(Início,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))    
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 6 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 6 THEN 
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_PT = SUBSTR(Fim,INSTR(Fim,"/")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))    
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 9 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 6 THEN 
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_PT = SUBSTR(Fim,INSTR(Fim,"/")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday("20" || SUBSTR(Início,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 6 AND (INSTR(Fim,"/") > 0 OR INSTR(Fim, "-") > 0) AND LENGTH(Fim) = 10 THEN
-					julianday(SUBSTR(Fim,7,4) || '-' || SUBSTR(Fim,4,2) || '-' || SUBSTR(Fim,1,2))
-					- julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 9 AND (INSTR(Fim,"/") > 0 OR INSTR(Fim, "-") > 0) AND LENGTH(Fim) = 10 THEN
-					julianday(SUBSTR(Fim,7,4) || '-' || SUBSTR(Fim,4,2) || '-' || SUBSTR(Fim,1,2))
-					- julianday("20" || SUBSTR(Início,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))        
-
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 6 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 8 THEN
-					julianday("20" || SUBSTR(Fim,7,2) || '-' || SUBSTR(Fim,4,2) || '-' || SUBSTR(Fim,1,2))
-					- julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 9 AND INSTR(Fim,"/") > 0 AND LENGTH(Fim) = 8 THEN
-					julianday("20" || SUBSTR(Fim,7,2) || '-' || SUBSTR(Fim,4,2) || '-' || SUBSTR(Fim,1,2))
-					- julianday("20" || SUBSTR(Início,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 6 AND INSTR(Fim,"-") > 0 AND LENGTH(Fim) = 9 THEN
-					julianday("20" || SUBSTR(Fim,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Fim,INSTR(Fim,"-")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 9 AND INSTR(Fim,"-") > 0 AND LENGTH(Fim) = 9 THEN
-					julianday("20" || SUBSTR(Fim,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Fim,INSTR(Fim,"-")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday("20" || SUBSTR(Início,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 6 AND INSTR(Fim,"-") > 0 AND LENGTH(Fim) = 6 THEN
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Fim,INSTR(Fim,"-")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-
-			WHEN INSTR(Início,"-") > 0 AND LENGTH(Início) = 9 AND INSTR(Fim,"-") > 0 AND LENGTH(Fim) = 6 THEN
-					julianday(ANO || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Fim,INSTR(Fim,"-")+1,3)) || '-' || SUBSTR(Fim,1,2))
-					- julianday("20" || SUBSTR(Início,8,2) || '-' || (SELECT Numero FROM TEMP_MESES_NUMERO WHERE Mes_EN = SUBSTR(Início,INSTR(Início,"-")+1,3)) || '-' || SUBSTR(Início,1,2))
-					
-			ELSE NULL
-		END AS Duracao
-	 FROM TEMP_AVISOS_GREVE1;""")
-
-
-	#Atualizar os registos em que a duracao < 0
-	cursor.execute("""UPDATE TEMP_AVISOS_GREVE SET Ano_Inicio = Ano_Fim, Mes_Inicio = Mes_Fim, Ano_Fim = Ano_Inicio, Mes_Fim = Mes_Inicio, Duracao = Duracao * -1 
-		WHERE Duracao < 0;""")
-
-	#Popular a tabela avisos de greve com o 2º csv (avisos de greve de 2015 a 2019)
-	cursor.execute("""INSERT INTO TEMP_AVISOS_GREVE SELECT DISTINCT
-			NULL, 
-			ANO AS Ano_Inicio, 
-			MÊS AS Mes_Fim, 
-			CASE 
-				WHEN SINDICATO LIKE "%2%" THEN NULL
-				WHEN INSTR(SINDICATO,";") > 0 AND INSTR(SINDICATO, "(") = 0 THEN REPLACE(SINDICATO,";", " / ")
-				ELSE SINDICATO
-			END AS Entidade_Sindical,
-			CASE
-				WHEN EMPREGADOR = "2019" OR INSTR(EMPREGADOR,"/") = 3 THEN NULL 
-				ELSE EMPREGADOR 
-			END AS Entidade_Patronal, 
-			ANO AS Ano_Fim, 
-			MÊS AS Mes_Fim,
-			CASE
-				WHEN DURAÇÃO = "Total 1 dia" OR DURAÇÃO = "Total  1 dia" THEN 1
-				WHEN (DURAÇÃO LIKE "%Parcial%" OR DURAÇÃO LIKE "%PARCIAL%") AND INSTR(DURAÇÃO,"+") = 0 AND INSTR(DURAÇÃO,"1") > 0 THEN 1
-				WHEN (DURAÇÃO LIKE "%Parcial%" OR DURAÇÃO LIKE "%PARCIAL%") AND INSTR(DURAÇÃO,"+") = 0 AND INSTR(DURAÇÃO,"3") > 0 THEN 3
-				WHEN 1 <= LENGTH(DURAÇÃO) <= 2 AND 1 <= CAST(DURAÇÃO AS INTEGER) <= 10 THEN CAST(DURAÇÃO AS INTEGER)
-				ELSE NULL
-			END AS Duracao 
-		FROM TEMP_AVISOS_GREVE2;""")
-
-	#Separar em varios registos os registos que possuem mais do que uma entidade sindical envolvida no aviso de greve
-	#Inserir na tabela Avisos de Greve
-	
-	cursor.execute("""WITH RECURSIVE split(id, ano_in, mes_in, ent_sind, ent_pat, ano_f, mes_f, dur, rest) AS 
-	(SELECT Id_Entidade_Sindical, Ano_Inicio, Mes_Inicio, '', Entidade_Patronal, Ano_Fim, Mes_Fim, Duracao, Entidade_Sindical || ' / ' FROM TEMP_AVISOS_GREVE
-		UNION ALL
-	SELECT  id, ano_in, mes_in, SUBSTR(rest,0,INSTR(rest,'/')-1), ent_pat, ano_f, mes_f, dur, SUBSTR(rest, INSTR(rest,'/')+2) FROM split WHERE rest LIKE "% / %" 
-	AND INSTR(rest, "(") = 0 AND rest <> '')
-	INSERT INTO TEMP_AVISOS_GREVE_2 SELECT DISTINCT id, ano_in, mes_in, ent_sind, ent_pat, ano_f, mes_f, dur FROM split WHERE ent_sind <> '';""")
-
-	'''INSERT INTO Avisos_Greve SELECT DISTINCT id, ano_in, mes_in, ent_sind, ent_pat, ano_f, mes_f, dur FROM split WHERE ent_sind <> '';""")'''
-
-
-	#Tratamento de caracteres acentuados e abreviaturas
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = trim(UPPER(Entidade_Sindical));")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ç', 'Ç') WHERE instr(Entidade_Sindical, 'ç') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ã', 'Ã') WHERE instr(Entidade_Sindical, 'ã') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'â', 'Â') WHERE instr(Entidade_Sindical, 'â') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'õ', 'Õ') WHERE instr(Entidade_Sindical, 'õ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ú', 'Ú') WHERE instr(Entidade_Sindical, 'ú') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'í', 'Í') WHERE instr(Entidade_Sindical, 'í') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'á', 'Á') WHERE instr(Entidade_Sindical, 'á') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'é', 'É') WHERE instr(Entidade_Sindical, 'é') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ó', 'Ó') WHERE instr(Entidade_Sindical, 'ó') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ê', 'Ê') WHERE instr(Entidade_Sindical, 'ê') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'CGTP-IN', 'CGTPIN') WHERE instr(Entidade_Sindical, 'CGTP-IN') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, ', SA', ', S.A.') WHERE instr(Entidade_Sindical, ', SA') > 0 AND instr(Entidade_Sindical, 'UNICER BEBIDAS') = 0 AND instr(Entidade_Sindical,'LISBOA, SANTARÉM E PORTALEGRE') = 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'TRAB. ', 'TRABALHADORES ') WHERE instr(Entidade_Sindical, 'TRAB. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SIND. ', 'SINDICATO ') WHERE instr(Entidade_Sindical, 'SIND. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'IND. ', 'INDÚSTRIA ') WHERE instr(Entidade_Sindical, 'IND. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'FIG. ', 'FIGUEIRA ') WHERE instr(Entidade_Sindical, 'FIG. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'REST. ', 'RESTAURANTES ') WHERE instr(Entidade_Sindical, 'REST. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'EMP. ', 'EMPRESAS ') WHERE instr(Entidade_Sindical, 'EMP. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, ' EPE', ' E.P.E.') WHERE instr(Entidade_Sindical, ' EPE') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, ' E.M', ' E.M.') WHERE instr(Entidade_Sindical, ' E.M') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'QUADROS TÉCNICOS', 'QUADROS E TÉCNICOS') WHERE instr(Entidade_Sindical, 'QUADROS TÉCNICOS') > 0 AND instr(Entidade_Sindical, 'SENSIQ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'CENTRO E NORTE', 'CENTRO NORTE') WHERE instr(Entidade_Sindical, 'CENTRO E NORTE') > 0 AND instr(Entidade_Sindical, 'SITE CENTRO NORTE') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'E CURTUMES', 'E CURTUMES DO DISTRITO DO PORTO') WHERE instr(Entidade_Sindical, 'SINTEVECC -') > 0 AND instr(Entidade_Sindical, 'E CURTUMES') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SINTEVECC SUL -', 'SINTEVECC -') WHERE instr(Entidade_Sindical, 'SINTEVECC SUL -') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'CERAMICA', 'CERÂMICA') WHERE instr(Entidade_Sindical, 'CERAMICA') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'CÊRAMICA', 'CERÂMICA') WHERE instr(Entidade_Sindical, 'CÊRAMICA') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'VOO', 'VÔO') WHERE instr(Entidade_Sindical, 'VOO') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SIND.', 'SINDICATO ') WHERE instr(Entidade_Sindical, 'SIND.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'TRAB.', 'TRABALHADORES ') WHERE instr(Entidade_Sindical, 'TRAB.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'IND.', 'INDÚSTRIAS ') WHERE instr(Entidade_Sindical, 'IND.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'TRAB ', 'TRABALHADORES ') WHERE instr(Entidade_Sindical, 'TRAB ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SIND ', 'SINDICATO ') WHERE instr(Entidade_Sindical, 'SIND ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'NAC. ', 'NACIONAL ') WHERE instr(Entidade_Sindical, 'NAC. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'NAC.', 'NACIONAL ') WHERE instr(Entidade_Sindical, 'NAC.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SIN. ', 'SINDICATO ') WHERE instr(Entidade_Sindical, 'SIN. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SIN.', 'SINDICATO ') WHERE instr(Entidade_Sindical, 'SIN.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SIN ', 'SINDICATO ') WHERE instr(Entidade_Sindical, 'SIN ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SINDIC. ', 'SINDICATO ') WHERE instr(Entidade_Sindical, 'SINDIC. ') > 0;") 
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ASSOC. ', 'ASSOCIAÇÃO ') WHERE instr(Entidade_Sindical, 'ASSOC. ') > 0;") 
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ASSOC.', 'ASSOCIAÇÃO ') WHERE instr(Entidade_Sindical, 'ASSOC.') > 0;") 
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ASS. ', 'ASSOCIAÇÃO ') WHERE instr(Entidade_Sindical, 'ASS. ') > 0;") 
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ASS.', 'ASSOCIAÇÃO ') WHERE instr(Entidade_Sindical, 'ASS.') > 0;") 
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SOC. ', 'SOCIEDADE ') WHERE instr(Entidade_Sindical, 'SOC. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'SOC.', 'SOCIEDADE ') WHERE instr(Entidade_Sindical, 'SOC.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ADM. ', 'ADMINISTRAÇÕES ') WHERE instr(Entidade_Sindical, 'ADM. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ADM.', 'ADMINISTRAÇÕES ') WHERE instr(Entidade_Sindical, 'ADM.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ESP.', 'ESPECTACULOS ') WHERE instr(Entidade_Sindical, 'ESP.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'TRANSP. ', 'TRANSPORTES ') WHERE instr(Entidade_Sindical, 'TRANSP. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'TRANSP.', 'TRANSPORTES ') WHERE instr(Entidade_Sindical, 'TRANSP.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'TEC. ', 'TÉCNICOS ') WHERE instr(Entidade_Sindical, 'TEC. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'TÉC. ', 'TÉCNICOS ') WHERE instr(Entidade_Sindical, 'TÉC. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'CONF. ', 'CONFERENTES ') WHERE instr(Entidade_Sindical, 'CONF. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'TER. ', 'TERMINAIS ') WHERE instr(Entidade_Sindical, 'TER. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'CONTENT. ', 'CONTENTORIZADA ') WHERE instr(Entidade_Sindical, 'CONTENT. ') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'REST.', 'RESTAURAÇÃO, ') WHERE instr(Entidade_Sindical, 'REST.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'UNIPESSOAL.', 'UNIPESSOAL,') WHERE instr(Entidade_Sindical, 'UNIPESSOAL.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'PROF.', 'PROFISSIONAIS') WHERE instr(Entidade_Sindical, 'PROF.') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'STOP', 'SINDICATO DE TODOS OS PROFESSORES') WHERE instr(Entidade_Sindical, 'STOP') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'S.TO.P', 'SINDICATO DE TODOS OS PROFESSORES') WHERE instr(Entidade_Sindical, 'S.TO.P') > 0;")
-	cursor.execute("UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = replace(Entidade_Sindical, 'ESTAB. ', 'ESTABELECIMENTOS ') WHERE instr(Entidade_Sindical, 'ESTAB. ') > 0;")
-
-	#atribuicao de id aos registos cuja entidade sindical satisfaz as condicoes relativas a tabela Org_Sindical
-	cursor.execute("""UPDATE TEMP_AVISOS_GREVE_2 SET Id_Entidade_Sindical = (SELECT ID FROM Org_Sindical o WHERE 
-		(INSTR(Entidade_Sindical, " - ") = 0 AND Entidade_Sindical = TRIM(o.Acronimo)) OR 
-		(INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") = 0 AND Entidade_Sindical = TRIM(o.Nome)) OR
-		(INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND SUBSTR(Entidade_Sindical,0,INSTR(Entidade_Sindical," - ")) = TRIM(o.Acronimo))
-		OR (INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND SUBSTR(Entidade_Sindical,INSTR(Entidade_Sindical," - ")+3) = TRIM(o.Nome))
-		OR (INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND Entidade_Sindical = o.Nome));""")
-
-	#troca da entidade_sindical com a entidade_patronal e vice versa nos casos em que as colunas estao trocadas
-	cursor.execute("""UPDATE TEMP_AVISOS_GREVE_2 SET Entidade_Sindical = Entidade_Patronal, Entidade_Patronal = Entidade_Sindical WHERE (Id_Entidade_Sindical IS NULL) AND 
-	(Entidade_Patronal = (SELECT TRIM(o.Acronimo) FROM Org_Sindical o WHERE INSTR(Entidade_Patronal, " - ") = 0 AND Entidade_Patronal = TRIM(o.Acronimo)) OR 
-	Entidade_Patronal = (SELECT TRIM(o.Nome) FROM Org_Sindical o WHERE INSTR(Entidade_Patronal, " ") > 0 AND INSTR(Entidade_Patronal," - ") = 0 AND Entidade_Patronal = TRIM(o.Nome)) OR
-	SUBSTR(Entidade_Patronal,0,INSTR(Entidade_Patronal," - ")) = (SELECT TRIM(o.Acronimo) FROM Org_Sindical o WHERE INSTR(Entidade_Patronal, " - ") > 0 AND SUBSTR(Entidade_Patronal,0,INSTR(Entidade_Patronal," - ")) = TRIM(o.Acronimo)) OR
-	SUBSTR(Entidade_Patronal,INSTR(Entidade_Patronal," - ")+3) = (SELECT TRIM(o.Acronimo) FROM Org_Sindical o WHERE INSTR(Entidade_Patronal, " - ") > 0 AND SUBSTR(Entidade_Patronal,INSTR(Entidade_Patronal," - ")+3) = TRIM(o.Nome)) OR
-	Entidade_Sindical = (SELECT TRIM(o.Acronimo) FROM Org_Patronal o WHERE INSTR(Entidade_Sindical, " - ") = 0 AND Entidade_Sindical = TRIM(o.Acronimo)) OR
-	Entidade_Sindical = (SELECT TRIM(o.Nome) FROM Org_Patronal o WHERE INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") = 0 AND Entidade_Sindical = TRIM(o.Nome)) OR
-	SUBSTR(Entidade_Sindical,0,INSTR(Entidade_Sindical," - ")) = (SELECT TRIM(o.Acronimo) FROM Org_Patronal o WHERE INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND SUBSTR(Entidade_Sindical,0,INSTR(Entidade_Sindical," - ")) = TRIM(o.Acronimo)) OR
-	SUBSTR(Entidade_Sindical,INSTR(Entidade_Sindical," - ")+3) = (SELECT TRIM(o.Nome) FROM Org_Patronal o WHERE INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND SUBSTR(Entidade_Sindical,INSTR(Entidade_Sindical," - ")+3) = TRIM(o.Nome)) OR
-	Entidade_Sindical = (SELECT TRIM(o.Nome) FROM Org_Patronal o WHERE INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND Entidade_Sindical = o.Nome));""")
-
-
-	#atribuicao de id aos registos cuja entidade sindical satisfaz as condicoes relativas a tabela Org_Sindical, 
-	#depois da troca efetuada e so para as entidades sindicais cujo id ainda e null
-	cursor.execute("""UPDATE TEMP_AVISOS_GREVE_2 SET Id_Entidade_Sindical = (SELECT ID FROM Org_Sindical o WHERE 
-		(INSTR(Entidade_Sindical, " - ") = 0 AND Entidade_Sindical = TRIM(o.Acronimo)) OR 
-		(INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") = 0 AND Entidade_Sindical = TRIM(o.Nome)) OR
-		(INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND SUBSTR(Entidade_Sindical,0,INSTR(Entidade_Sindical," - ")) = TRIM(o.Acronimo))
-		OR (INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND SUBSTR(Entidade_Sindical,INSTR(Entidade_Sindical," - ")+3) = TRIM(o.Nome))
-		OR (INSTR(Entidade_Sindical, " ") > 0 AND INSTR(Entidade_Sindical," - ") > 0 AND Entidade_Sindical = o.Nome)) WHERE Id_Entidade_Sindical IS NULL;""")
-
-
-	cursor.execute("""INSERT INTO Avisos_Greve SELECT
-		Id_Entidade_Sindical,
-		Ano_Inicio,
-		Mes_Inicio,
-		Entidade_Sindical,
-		Entidade_Patronal,
-		Ano_Fim,
-		Mes_Fim,
-		Duracao 
-		FROM TEMP_AVISOS_GREVE_2;""")
-
-
 	cursor.execute("DROP VIEW TEMP_DATAS_ENTIDADES;")
 	cursor.execute("DROP TABLE TEMP_ALTERACOES_ESTATUTOS;")
 	cursor.execute("DROP TABLE TEMP_ALTERACOES_ESTATUTOS1;")
@@ -1693,11 +1339,6 @@ def repDatabase():
 	cursor.execute("DROP TABLE TEMP_PROCESSOS;")
 	cursor.execute("DROP TABLE TEMP_IRCT;")
 	cursor.execute("DROP TABLE TEMP_OUTORGANTES;")
-	cursor.execute("DROP TABLE TEMP_AVISOS_GREVE1;")
-	cursor.execute("DROP TABLE TEMP_AVISOS_GREVE2;")
-	cursor.execute("DROP TABLE TEMP_MESES_NUMERO;")
-	cursor.execute("DROP TABLE TEMP_AVISOS_GREVE;")
-	cursor.execute("DROP TABLE TEMP_AVISOS_GREVE_2;")
 	cursor.execute("DROP TABLE TEMP_WEBSITES_SINDICAIS;")
 	cursor.execute("DROP TABLE TEMP_WEBSITES_PATRONAIS;")
 

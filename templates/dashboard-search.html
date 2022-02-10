@@ -45,8 +45,12 @@
                 </div>
                 <div class="input-group col-3">
                     <label class="form-text" for="distrito">Distrito:&nbsp;</label>
-                    <input class="form-control" placeholder="Inserir..." id="distrito" name="distrito"
-                        value="{{ search['distrito'] }}" />
+                    <select class="form-control" name="distrito" id="distrito">
+                        <option value="">Selecionar...</option>
+                        {% for distrito in ["AVEIRO","BEJA","BRAGA","BRAGANÇA","CASTELO BRANCO","COIMBRA","EVORA","FARO","GUARDA","LEIRIA","LISBOA","PORTALEGRE","PORTO","SANTARÉM","SETÚBAL","VIANA DO CASTELO","VILA REAL","VISEU"]%}
+                            <option value="{{ distrito }}" {{ 'selected' if search['distrito']==distrito }}>{{ distrito }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="input-group col-4">
                     <label class="form-text" for="distrito">Ano de início:&nbsp;</label>

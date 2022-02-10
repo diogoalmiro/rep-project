@@ -1805,6 +1805,9 @@ def repDatabase():
 	cursor.execute("UPDATE Org_Sindical SET Codigo_Postal=SUBSTR(Codigo_Postal, 0, 4) || '-' || SUBSTR(Codigo_Postal, 5, 3) WHERE Codigo_Postal IS NOT NULL AND instr(Codigo_Postal,'-') <= 0 AND LENGTH(Codigo_Postal)=7;")
 	cursor.execute("UPDATE Org_Patronal SET Codigo_Postal=SUBSTR(Codigo_Postal, 0, 4) || '-' || SUBSTR(Codigo_Postal, 5, 3) WHERE Codigo_Postal IS NOT NULL AND instr(Codigo_Postal,'-') <= 0 AND LENGTH(Codigo_Postal)=7;")
 
+	cursor.execute("UPDATE Org_Sindical SET Distrito_Sede=replace(Distrito_Sede,'EVORA','ÉVORA') WHERE Distrito_Sede IS NOT NULL AND instr(Distrito_Sede, 'EVORA');")
+	cursor.execute("UPDATE Org_Patronal SET Distrito_Sede=replace(Distrito_Sede,'EVORA','ÉVORA') WHERE Distrito_Sede IS NOT NULL AND instr(Distrito_Sede, 'EVORA');")
+
 	#PREENCHE A TABELA DA DIRECCAO_ORG_SINDICAL
 	listasDirigentes(cursor)
 

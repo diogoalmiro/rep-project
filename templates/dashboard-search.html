@@ -77,7 +77,7 @@
                 <a href="{{ url_for('server_side_search')}}" class="btn btn-primary">Nova pesquisa</a>
                 <div>
                     {% if (search['page'] or 0) > 0 %}
-                    <a href="?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ search['page']-1 }}">Pagina anterior</a>
+                    <a href="?table_org={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ search['page']-1 }}">Pagina anterior</a>
                     {% else %}
                     <span>Pagina anterior</span>
                     {% endif %}
@@ -85,12 +85,12 @@
                     <span>Página {{ (search['page'] or 0) + 1 }}</span>
                     <span>&bull;</span>
                     {% if not last_page %}
-                    <a href="?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ (search['page'] or 0)+1 }}">Pagina seguinte</a>
+                    <a href="?table_org={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ (search['page'] or 0)+1 }}">Pagina seguinte</a>
                     {% else %}
                     <span>Pagina seguinte</span>
                     {% endif %}
                 </div>
-                <a target="_blank" href="{{ url_for('export') }}?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary">Exportar resultados em Excel</a>
+                <a target="_blank" href="{{ url_for('export') }}?table_org={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary">Exportar resultados em Excel</a>
         </nav>
         <table id="my_table" border="1">
             <thead class="sticky-top">
@@ -108,7 +108,7 @@
             <a href="{{ url_for('server_side_search')}}" class="btn btn-primary">Nova pesquisa</a>
             <div>
                 {% if (search['page'] or 0) > 0 %}
-                <a href="?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ search['page']-1 }}">Pagina anterior</a>
+                <a href="?table_org={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ search['page']-1 }}">Pagina anterior</a>
                 {% else %}
                 <span>Pagina anterior</span>
                 {% endif %}

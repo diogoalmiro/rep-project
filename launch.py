@@ -129,7 +129,7 @@ def server_side_search():
 @app.route("/export/")
 def export():
     search = {}
-    search["table"] = request.args.get('table', "")
+    search["table"] = request.args.get('table_org', "")
     search["term"] = request.args.get('organization', "")
     search["distrito"]  = request.args.get('distrito', "")
     search["setor"] = request.args.get('setor', "")

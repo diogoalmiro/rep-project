@@ -195,7 +195,7 @@ def export():
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Negociação Coletiva", index=False)
 
-    col_names = ["_id_greve", "ID Organização Sindical", "Nome da Organização Sindical", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"]
+    col_names = ["_id_greve", "Código Identificador da Organização", "Nome da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"]
     rows = connection.execute("""
             SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Sindical.ID, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
               FROM Avisos_Greve_New
@@ -203,6 +203,13 @@ def export():
               JOIN Org_Sindical
              WHERE Avisos_Greve_Participante_Sindical.Id_Entidade_Sindical = Org_Sindical.ID
                AND Avisos_Greve_Participante_Sindical.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
+             UNION
+            SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Patronal.ID, Org_Patronal.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
+              FROM Avisos_Greve_New
+              JOIN Avisos_Greve_Participante_Patronal
+              JOIN Org_Patronal
+             WHERE Avisos_Greve_Participante_Patronal.Id_Entidade_Patronal = Org_Patronal.ID
+               AND Avisos_Greve_Participante_Patronal.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
           ORDER BY Avisos_Greve_New.ID_Aviso_Greve
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Avisos de Greve", index=False)
@@ -213,6 +220,11 @@ def export():
               FROM Mencoes_BTE_Org_Sindical, Org_Sindical
              WHERE Mencoes_BTE_Org_Sindical.ID_Organizacao_Sindical = Org_Sindical.ID 
                AND Mudanca_Estatuto = TRUE
+             UNION
+            SELECT ID_Organizacao_Patronal, Org_Patronal.Nome, Ano, Numero, Serie, URL
+              FROM Mencoes_BTE_Org_Patronal, Org_Patronal
+             WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal = Org_Patronal.ID 
+               AND Mudanca_Estatuto = TRUE
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Mudanças de Estatuto", index=False)
 
@@ -221,6 +233,11 @@ def export():
             SELECT ID_Organizacao_Sindical, Org_Sindical.Nome, Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Sindical, Org_Sindical
              WHERE Mencoes_BTE_Org_Sindical.ID_Organizacao_Sindical = Org_Sindical.ID 
+               AND Eleicoes = TRUE
+             UNION
+            SELECT ID_Organizacao_Patronal, Org_Patronal.Nome, Ano, Numero, Serie, URL
+              FROM Mencoes_BTE_Org_Patronal, Org_Patronal
+             WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal = Org_Patronal.ID 
                AND Eleicoes = TRUE
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Eleições", index=False)

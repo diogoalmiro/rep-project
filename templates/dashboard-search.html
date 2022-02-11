@@ -116,12 +116,12 @@
                 <span>Página {{ (search['page'] or 0) + 1 }}</span>
                 <span>&bull;</span>
                 {% if not last_page %}
-                <a href="?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ (search['page'] or 0)+1 }}">Pagina seguinte</a>
+                <a href="?table_org={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}&page={{ (search['page'] or 0)+1 }}">Pagina seguinte</a>
                 {% else %}
                 <span>Pagina seguinte</span>
                 {% endif %}
             </div>
-            <a target="_blank" href="{{ url_for('export') }}?table={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary">Exportar resultados em Excel</a>
+            <a target="_blank" href="{{ url_for('export') }}?table_org={{ search['table'] }}&organization={{ search['term'] }}&distrito={{ search['distrito'] }}&setor={{ search['setor'] }}&ano-inicio={{ search['inicio'] }}&ano-fim={{ search['fim'] }}" class="btn btn-primary">Exportar resultados em Excel</a>
     </nav>
     </div>
     </div>

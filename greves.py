@@ -155,11 +155,12 @@ def get_inicial_month_value(row: pd.Series):
         found_value = get_value(row, ["data entrada"])
         return found_value.month
     if isinstance(found_value, str):
-        regres = None
-        if regres := re.search(r"\b((jan)|(fev)|(mar)|(abr)|(mai)|(jun)|(jul)|(ago)|(set)|(out)|(nov)|(dez))", found_value, re.I):
+        regres = re.search(r"\b((jan)|(fev)|(mar)|(abr)|(mai)|(jun)|(jul)|(ago)|(set)|(out)|(nov)|(dez))", found_value, re.I)
+        if regres:
             months = {'jan':1,'fev':2,'mar':3,'abr':4,'mai':5,'jun':6,'jul':7,'ago':8,'set':9,'out':10,'nov':11,'dez':12}
             return months[regres.group(0).lower()]
-        if regres := re.search(r"\d{1,2}[/-](\d{1,2})(([/-]\d{4})?)", found_value):
+        regres = re.search(r"\d{1,2}[/-](\d{1,2})(([/-]\d{4})?)", found_value)
+        if regres:
             return int(regres.group(1))
         if re.search("feriado", found_value, re.I):
             return 1
@@ -178,8 +179,8 @@ def get_end_month_value(row: pd.Series):
         found_value = get_value(row, ["data entrada"])
         return found_value.month
     if isinstance(found_value, str):
-        regres = None
-        if regres := re.findall(r"\b((jan)|(fev)|(mar)|(abr)|(mai)|(jun)|(jul)|(ago)|(set)|(out)|(nov)|(dez))", found_value, re.I):
+        regres = re.findall(r"\b((jan)|(fev)|(mar)|(abr)|(mai)|(jun)|(jul)|(ago)|(set)|(out)|(nov)|(dez))", found_value, re.I)
+        if regres:
             months = {'jan':1,'fev':2,'mar':3,'abr':4,'mai':5,'jun':6,'jul':7,'ago':8,'set':9,'out':10,'nov':11,'dez':12}
             if( len(regres) == 1 ):
                 return int(months[regres[0][0].lower()])
@@ -187,7 +188,8 @@ def get_end_month_value(row: pd.Series):
                 return int(months[regres[1][0].lower()])
         if re.search("(ti)|(ideter)|(indeter)|(pagamento)|(feriado)", found_value, re.I):
             return 12
-        if regres := re.findall(r"(\d{1,2}[/-](\d{1,2})([/-]\d{4})?)", found_value):
+        regres = re.findall(r"(\d{1,2}[/-](\d{1,2})([/-]\d{4})?)", found_value)
+        if regres:
             if( len(regres) == 1):
                 return int(regres[0][1])
             else:

@@ -47,7 +47,7 @@
                     <label class="form-text" for="distrito">Distrito:&nbsp;</label>
                     <select class="form-control" name="distrito" id="distrito">
                         <option value="">Selecionar...</option>
-                        {% for distrito in ["AVEIRO","BEJA","BRAGA","BRAGANÇA","CASTELO BRANCO","COIMBRA","EVORA","FARO","GUARDA","LEIRIA","LISBOA","PORTALEGRE","PORTO","SANTARÉM","SETÚBAL","VIANA DO CASTELO","VILA REAL","VISEU"]%}
+                        {% for distrito in ["AVEIRO","BEJA","BRAGA","BRAGANÇA","CASTELO BRANCO","COIMBRA","ÉVORA","FARO","GUARDA","LEIRIA","LISBOA","PORTALEGRE","PORTO","SANTARÉM","SETÚBAL","VIANA DO CASTELO","VILA REAL","VISEU"]%}
                             <option value="{{ distrito }}" {{ 'selected' if search['distrito']==distrito }}>{{ distrito }}</option>
                         {% endfor %}
                     </select>

@@ -89,7 +89,7 @@ def server_side_search():
 
     sqlformat = {}
     sqlformat["table"] = search["table"]
-    sqlformat["term"] = "%{}%".format(search["term"])
+    sqlformat["term"] = "%{}%".format(search["term"].upper())
     sqlformat["distrito"]  = "%{}%".format(search["distrito"])
     sqlformat["setor"] = "%{}%".format(search["setor"])
     sqlformat["inicio"] = "{}-01-01".format(search["inicio"] or "0000")
@@ -138,7 +138,7 @@ def export():
 
     sqlformat = {}
     sqlformat["table"] = search["table"]
-    sqlformat["term"] = "%{}%".format(search["term"])
+    sqlformat["term"] = "%{}%".format(search["term"].upper())
     sqlformat["distrito"]  = "%{}%".format(search["distrito"])
     sqlformat["setor"] = "%{}%".format(search["setor"])
     sqlformat["inicio"] = "{}-01-01".format(search["inicio"] or "0000")

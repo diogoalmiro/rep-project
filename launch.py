@@ -83,7 +83,7 @@ def server_side_search():
     results = []
 
     connection = sqlite3.connect(DATABASE_NAME)
-    connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta", deterministic=True)
+    connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta")
     cursor = connection.execute("""
         SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, act2str(Activa)
         FROM Org_Patronal
@@ -128,7 +128,7 @@ def export():
     sqlformat["fim"] = "{}-12-31".format(search["fim"] or date.today().year)
 
     connection = sqlite3.connect(DATABASE_NAME)
-    connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta", deterministic=True)
+    connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta")
     
     strIO = BytesIO()
     excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")

@@ -77,18 +77,18 @@ def main():
     entidades_path.mkdir(parents=True, exist_ok=True)
     distritos = {}
     sorted_nomes = []
-    colname = ['id', 'nome', 'distrito_sede', 'activa', 'acronimo', 'data_inicio', 'data_fim']
-    for org_sindical in conn.execute('SELECT ID, NOME, DISTRITO_SEDE, act2str(ACTIVA) as ACTIVA, Acronimo, Data_Primeira_Actividade, Data_Ultima_Actividade FROM Org_Sindical').fetchall():
+    colname = ['id', 'nome', 'distrito_sede', 'activa', 'acronimo', 'data_inicio', 'data_fim', 'website']
+    for org_sindical in conn.execute('SELECT ID, NOME, DISTRITO_SEDE, act2str(ACTIVA) as ACTIVA, Acronimo, Data_Primeira_Actividade, Data_Ultima_Actividade, website FROM Org_Sindical').fetchall():
         if org_sindical[2] not in distritos:
             distritos[org_sindical[2]] = []
         distritos[org_sindical[2]].append({'id':org_sindical[0], 'nome':org_sindical[1]})
         sorted_nomes.append({'id':org_sindical[0], 'nome':org_sindical[1]})
         archive_entity({col: org_sindical[i] or "" for i, col in enumerate(colname)},'sindical', conn)
-    for org_patronal in conn.execute('SELECT ID, NOME, DISTRITO_SEDE, act2str(ACTIVA) as ACTIVA, Acronimo, Data_Primeira_Actividade, Data_Ultima_Actividade FROM Org_Patronal').fetchall():
+    for org_patronal in conn.execute('SELECT ID, NOME, DISTRITO_SEDE, act2str(ACTIVA) as ACTIVA, Acronimo, Data_Primeira_Actividade, Data_Ultima_Actividade, website FROM Org_Patronal').fetchall():
         if org_patronal[2] not in distritos:
             distritos[org_patronal[2]] = []
         distritos[org_patronal[2]].append({'id':org_patronal[0], 'nome':org_patronal[1]})
-        sorted_nomes.append({'id':org_sindical[0], 'nome':org_sindical[1]})
+        sorted_nomes.append({'id':org_patronal[0], 'nome':org_patronal[1]})
         archive_entity({col: org_patronal[i] or "" for i, col in enumerate(colname)},'patronal', conn)
     
     file = entidades_path/"bydistrito.html"
@@ -97,6 +97,9 @@ def main():
     file.write_text(render)
 
     sorted_nomes.sort(key=lambda x: x['nome'])
+    for x in sorted_nomes:
+        if x["id"] == "4.9.2":
+            print(x)
     file = entidades_path/"bynome.html"
     template_distrito = Template((templates_path/"bynome.html").open().read())
     render = template_distrito.render(sorted_nomes=sorted_nomes)

@@ -86,7 +86,6 @@
                         <th>Nome</th>
                         <th>Tipo</th>
                         <th>Natureza</th>
-                        <th>CAE</th>
                         <th>Ano</th>
                         <th>Âmbito Geográfico</th>
                         <th>Numero</th>
@@ -98,7 +97,7 @@
                     {% for row in atos_negociacao %}
                     <tr>
                         {% for col in row.values() %}
-                            <td>{{col}}</td>
+                            <td>{{col|urlize()}}</td>
                         {% endfor %}
                     </tr>
                     {% endfor %}
@@ -122,7 +121,7 @@
                     {% for row in avisos_greve %}
                     <tr>
                         {% for col in row.values() %}
-                            <td>{{col}}</td>
+                            <td>{{col|urlize()}}</td>
                         {% endfor %}
                     </tr>
                     {% endfor %}
@@ -144,7 +143,7 @@
                     {% for row in mudancas_estatuto %}
                     <tr>
                         {% for col in row.values() %}
-                            <td>{{col}}</td>
+                            <td>{{col|urlize()}}</td>
                         {% endfor %}
                     </tr>
                     {% endfor %}
@@ -166,7 +165,7 @@
                     {% for row in eleicoes %}
                     <tr>
                         {% for col in row.values() %}
-                            <td>{{col}}</td>
+                            <td>{{col|urlize()}}</td>
                         {% endfor %}
                     </tr>
                     {% endfor %}

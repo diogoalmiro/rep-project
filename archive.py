@@ -1,14 +1,15 @@
 from distutils.file_util import write_file
+from json import load
 import sqlite3
 from flask import render_template
 from pathlib import Path
 
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader, Template
 
 data_path = Path("static/data/")
 entidades_path = (data_path/"entidades")
-templates_path = Path("templates")
-template_entidade = Template((templates_path/"entidade.html").open().read())
+env = Environment(loader=FileSystemLoader("templates"))
+template_entidade = env.get_template("entidade.html")
 
 def subtables(id, colnames, sqlstr, conn):
     return [{colnames[i]: col for i, col in enumerate(row)} for row in conn.execute(sqlstr, {'id': id}).fetchall()]
@@ -16,14 +17,14 @@ def subtables(id, colnames, sqlstr, conn):
 def archive_entity(entidade, tipo_entidade, conn):
     file = entidades_path/f"{entidade['id']}.html"
 
-    atos_negociacao = subtables(entidade['id'], [ "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "CAE", "Ano", "Âmbito Geográfico", "Numero", "Série", "URL"], """
-            SELECT DISTINCT Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, CAE, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Ambito_Geografico, Numero, Serie, URL
+    atos_negociacao = subtables(entidade['id'], [ "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Âmbito Geográfico", "Numero", "Série", "URL"], """
+            SELECT DISTINCT Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Ambito_Geografico, Numero, Serie, URL
                        FROM Actos_Negociacao_Colectiva
                NATURAL JOIN Outorgantes_Actos, Org_Sindical
                       WHERE Org_Sindical.ID=ID_Organizacao_Sindical
                         AND ID_Organizacao_Sindical LIKE :id
             UNION
-            SELECT DISTINCT Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, CAE, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Ambito_Geografico, Numero, Serie, URL
+            SELECT DISTINCT Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Ambito_Geografico, Numero, Serie, URL
                        FROM Actos_Negociacao_Colectiva
                NATURAL JOIN Outorgantes_Actos, Org_Patronal
                       WHERE Org_Patronal.ID=ID_Organizacao_Patronal
@@ -67,8 +68,7 @@ def archive_entity(entidade, tipo_entidade, conn):
                AND Eleicoes = TRUE
     """, conn)
 
-    render = template_entidade.render(tipo_entidade=tipo_entidade, entidade=entidade, atos_negociacao=atos_negociacao, avisos_greve=avisos_greve, mudacas_estatuto=mudacas_estatuto, eleicoes=eleicoes)
-    file.write_text(render)
+    template_entidade.stream(tipo_entidade=tipo_entidade, entidade=entidade, atos_negociacao=atos_negociacao, avisos_greve=avisos_greve, mudacas_estatuto=mudacas_estatuto, eleicoes=eleicoes).dump(file.open('w'))
 
 def main():
     conn = sqlite3.connect('rep-database.db')
@@ -92,18 +92,13 @@ def main():
         archive_entity({col: org_patronal[i] or "" for i, col in enumerate(colname)},'patronal', conn)
     
     file = entidades_path/"bydistrito.html"
-    template_distrito = Template((templates_path/"bydistrito.html").open().read())
-    render = template_distrito.render(distritos=distritos)
-    file.write_text(render)
+    template_distrito = env.get_template("bydistrito.html")
+    template_distrito.stream(distritos=distritos).dump(file.open('w'))
 
     sorted_nomes.sort(key=lambda x: x['nome'])
-    for x in sorted_nomes:
-        if x["id"] == "4.9.2":
-            print(x)
     file = entidades_path/"bynome.html"
-    template_distrito = Template((templates_path/"bynome.html").open().read())
-    render = template_distrito.render(sorted_nomes=sorted_nomes)
-    file.write_text(render)
+    template_nomes = env.get_template("bynome.html")
+    template_nomes.stream(sorted_nomes=sorted_nomes).dump(file.open('w'))
         
 
 if __name__ == '__main__':

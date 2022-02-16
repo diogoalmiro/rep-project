@@ -237,11 +237,11 @@ def org_sindical_by_year():
     results = []
     for ano in range(1996, date.today().year + 1):
         cursor = connection.execute("""
-            SELECT Tipo, COUNT() As Count 
-            FROM Org_Sindical 
-            WHERE
-                :ano >= cast(strftime("%Y", Data_Primeira_Actividade) as number) 
-                AND (Activa = 1 OR :ano <= cast(strftime("%Y", Data_Ultima_actividade) as number) )
+            SELECT Tipo, count() As Count FROM
+                (SELECT ID, min(Ano_Inicio) As Ano_Inicio, max(Ano_Fim) As Ano_Fim, Tipo, max(Activa) as Activa FROM
+                    (SELECT substr(ID, -length(ID), length(ID)-2) AS ID, cast(strftime("%Y", Data_Primeira_Actividade) as Number) as Ano_Inicio, cast(strftime("%Y", Data_Ultima_Actividade)as Number) as Ano_Fim, Tipo, Activa FROM Org_Sindical)
+                GROUP BY ID)
+            WHERE Ano_Inicio <= :ano AND (Ano_Fim > :ano OR Activa = 1)
             GROUP BY Tipo""", {"ano": ano})
         curr_obj = {
             'ano': ano,
@@ -261,12 +261,12 @@ def org_patronal_by_year():
     results = []
     for ano in range(1996, date.today().year + 1):
         cursor = connection.execute("""
-            SELECT Tipo, COUNT() As Count 
-            FROM Org_Patronal 
-            WHERE
-                :ano >= cast(strftime("%Y", Data_Primeira_Actividade) as number) 
-                AND (Activa = 1 OR :ano <= cast(strftime("%Y", Data_Ultima_actividade) as number) )
-            GROUP BY Tipo""", {"ano": ano})
+            SELECT Tipo, count() As Count FROM
+                (SELECT ID, min(Ano_Inicio) As Ano_Inicio, max(Ano_Fim) As Ano_Fim, Tipo, max(Activa) as Activa FROM
+                    (SELECT substr(ID, -length(ID), length(ID)-2) AS ID, cast(strftime("%Y", Data_Primeira_Actividade) as Number) as Ano_Inicio, cast(strftime("%Y", Data_Ultima_Actividade)as Number) as Ano_Fim, Tipo, Activa FROM Org_Patronal)
+                GROUP BY ID)
+            WHERE Ano_Inicio <= :ano AND (Ano_Fim > :ano OR Activa = 1)
+            GROUP BY Tipo""",{"ano": ano})
         curr_obj = {
             'ano': ano,
             'CONFEDERAÇÃO PATRONAL': 0,

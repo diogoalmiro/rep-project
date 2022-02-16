@@ -16,14 +16,14 @@ def subtables(id, colnames, sqlstr, conn):
 def archive_entity(entidade, tipo_entidade, conn):
     file = entidades_path/f"{entidade['id']}.html"
 
-    atos_negociacao = subtables(entidade['id'], [ "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "CAE", "Ano", "Âmbito Geográfico" ], """
-            SELECT DISTINCT Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, CAE, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Ambito_Geografico
+    atos_negociacao = subtables(entidade['id'], [ "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "CAE", "Ano", "Âmbito Geográfico", "Numero", "Série", "URL"], """
+            SELECT DISTINCT Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, CAE, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Ambito_Geografico, Numero, Serie, URL
                        FROM Actos_Negociacao_Colectiva
                NATURAL JOIN Outorgantes_Actos, Org_Sindical
                       WHERE Org_Sindical.ID=ID_Organizacao_Sindical
                         AND ID_Organizacao_Sindical LIKE :id
             UNION
-            SELECT DISTINCT Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, CAE, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Ambito_Geografico
+            SELECT DISTINCT Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, CAE, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Ambito_Geografico, Numero, Serie, URL
                        FROM Actos_Negociacao_Colectiva
                NATURAL JOIN Outorgantes_Actos, Org_Patronal
                       WHERE Org_Patronal.ID=ID_Organizacao_Patronal
@@ -43,25 +43,25 @@ def archive_entity(entidade, tipo_entidade, conn):
           ORDER BY Avisos_Greve_New.ID_Aviso_Greve
     """, conn)
 
-    mudacas_estatuto = subtables(entidade['id'], ["Ano", "Número", "Série"], """
-            SELECT Ano, Numero, Serie
+    mudacas_estatuto = subtables(entidade['id'], ["Ano", "Número", "Série", "URL"], """
+            SELECT Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Sindical
              WHERE Mencoes_BTE_Org_Sindical.ID_Organizacao_Sindical LIKE :id
                AND Mudanca_Estatuto = TRUE
              UNION
-            SELECT Ano, Numero, Serie
+            SELECT Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Patronal
              WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal Like :id 
                AND Mudanca_Estatuto = TRUE
     """, conn)
 
-    eleicoes = subtables(entidade['id'], ["Ano", "Mês", "Tipo", "Número", "Série", "Data", "Local"], """
-            SELECT Ano, Numero, Serie
+    eleicoes = subtables(entidade['id'], ["Ano", "Número", "Série","URL"], """
+            SELECT Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Sindical
              WHERE Mencoes_BTE_Org_Sindical.ID_Organizacao_Sindical Like :id
                AND Eleicoes = TRUE
              UNION
-            SELECT Ano, Numero, Serie
+            SELECT Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Patronal
              WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal Like :id
                AND Eleicoes = TRUE

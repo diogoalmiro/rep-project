@@ -191,36 +191,55 @@ CREATE TABLE Avisos_Greve (
 
 CREATE TRIGGER Mencoes_BTE_Org_Sindical_update AFTER UPDATE ON Mencoes_BTE_Org_Sindical BEGIN
 		UPDATE Mencoes_BTE_Org_Sindical
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || [NEW].Ano || "/bte" || [NEW].Numero || "_" || [NEW].Ano || ".pdf"
-		WHERE ID_Organizacao_Sindical = [NEW].ID_Organizacao_Sindical; 
+		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
+		WHERE 
+			ID_Organizacao_Sindical = NEW.ID_Organizacao_Sindical AND
+			Ano = NEW.Ano AND
+			Numero = NEW.Numero AND
+			Serie = NEW.Serie;
 END;
 
 CREATE TRIGGER Mencoes_BTE_Org_Sindical_insert AFTER INSERT ON Mencoes_BTE_Org_Sindical BEGIN
 		UPDATE Mencoes_BTE_Org_Sindical
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || [NEW].Ano || "/bte" || [NEW].Numero || "_" || [NEW].Ano || ".pdf"
-		WHERE ID_Organizacao_Sindical = [NEW].ID_Organizacao_Sindical; 
+		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
+		WHERE ID_Organizacao_Sindical = NEW.ID_Organizacao_Sindical AND
+			Ano = NEW.Ano AND
+			Numero = NEW.Numero AND
+			Serie = NEW.Serie; 
 END;
 
 CREATE TRIGGER Mencoes_BTE_Org_Patronal_update AFTER UPDATE ON Mencoes_BTE_Org_Patronal BEGIN
 		UPDATE Mencoes_BTE_Org_Patronal
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || [NEW].Ano || "/bte" || [NEW].Numero || "_" || [NEW].Ano || ".pdf"
-		WHERE ID_Organizacao_Patronal = [NEW].ID_Organizacao_Patronal; 
+		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
+		WHERE ID_Organizacao_Patronal = NEW.ID_Organizacao_Patronal AND
+			Ano = NEW.Ano AND
+			Numero = NEW.Numero AND
+			Serie = NEW.Serie;
 END;
 
 CREATE TRIGGER Mencoes_BTE_Org_Patronal_insert AFTER INSERT ON Mencoes_BTE_Org_Patronal BEGIN
 		UPDATE Mencoes_BTE_Org_Patronal
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || [NEW].Ano || "/bte" || [NEW].Numero || "_" || [NEW].Ano || ".pdf"
-		WHERE ID_Organizacao_Patronal = [NEW].ID_Organizacao_Patronal; 
+		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
+		WHERE ID_Organizacao_Patronal = NEW.ID_Organizacao_Patronal AND
+			Ano = NEW.Ano AND
+			Numero = NEW.Numero AND
+			Serie = NEW.Serie;
 END;
 
 CREATE TRIGGER Actos_Negociacao_Colectiva_update AFTER UPDATE ON Actos_Negociacao_Colectiva BEGIN
 		UPDATE Actos_Negociacao_Colectiva
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || [NEW].Ano || "/bte" || [NEW].Numero || "_" || [NEW].Ano || ".pdf"
-		WHERE ID = [NEW].ID; 
+		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
+		WHERE ID = NEW.ID AND
+			ID_SEQUENCIAL = NEW.ID_SEQUENCIAL AND
+			Ano = NEW.Ano AND
+			Tipo_Acto = NEW.Tipo_Acto;
 END;
 
 CREATE TRIGGER Actos_Negociacao_Colectiva_insert AFTER INSERT ON Actos_Negociacao_Colectiva BEGIN
 		UPDATE Actos_Negociacao_Colectiva
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || [NEW].Ano || "/bte" || [NEW].Numero || "_" || [NEW].Ano || ".pdf"
-		WHERE ID = [NEW].ID; 
+		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
+		WHERE ID = NEW.ID AND
+			ID_SEQUENCIAL = NEW.ID_SEQUENCIAL AND
+			Ano = NEW.Ano AND
+			Tipo_Acto = NEW.Tipo_Acto;
 END;

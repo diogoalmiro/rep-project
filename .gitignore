@@ -1,4 +1,5 @@
 env/
+static/data/
 __pycache__/
 *.db
 

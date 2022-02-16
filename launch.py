@@ -162,15 +162,15 @@ def export():
     pd.DataFrame(list(rows), columns=col_names).to_excel(excel_writer, sheet_name="Organizações de Empregadores", index=False)
     IDS.extend(list(map(lambda x: x[0], rows)))
     
-    col_names = [ "Código Identificador da Organização", "Nome da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "CAE", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
+    col_names = [ "Código Identificador da Organização", "Nome da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
     rows = connection.execute("""
-            SELECT DISTINCT ID_Organizacao_Sindical, Org_Sindical.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, CAE, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
+            SELECT DISTINCT ID_Organizacao_Sindical, Org_Sindical.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
                        FROM Actos_Negociacao_Colectiva
                NATURAL JOIN Outorgantes_Actos, Org_Sindical
                       WHERE Org_Sindical.ID=ID_Organizacao_Sindical
                         AND ID_Organizacao_Sindical IS NOT NULL 
             UNION
-            SELECT DISTINCT ID_Organizacao_Patronal, Org_Patronal.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, CAE, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
+            SELECT DISTINCT ID_Organizacao_Patronal, Org_Patronal.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
                        FROM Actos_Negociacao_Colectiva
                NATURAL JOIN Outorgantes_Actos, Org_Patronal
                       WHERE Org_Patronal.ID=ID_Organizacao_Patronal

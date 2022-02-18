@@ -74,6 +74,11 @@ def main():
                 sindical = connection.execute("""SELECT ID FROM Org_Sindical WHERE ID LIKE :id""", {"id":id}).fetchone()
                 if sindical:
                     connection.execute(insertsindical, {"id_aviso_greve":cursor.lastrowid, "id_entidade_sindical":id})
+                else:
+                    sindical = connection.execute("""SELECT ID FROM Org_Sindical WHERE ID LIKE :id""", {"id":id+'._'}).fetchone()
+                    if sindical:
+                        connection.execute(insertsindical, {"id_aviso_greve":cursor.lastrowid, "id_entidade_sindical":sindical[0]})
+
                 patronal = connection.execute("""SELECT ID FROM Org_Patronal WHERE ID LIKE :id""", {"id":id}).fetchone()
                 if patronal:
                     connection.execute(insertpatronal, {"id_aviso_greve":cursor.lastrowid, "id_entidade_patronal":id})
@@ -94,7 +99,7 @@ def get_ID_by_name_or_acronimo(name, connection):
     return cursor.fetchone(), "ID_Entidade_Sindical"
 
 def all_formated_ids(row: pd.Series):
-    for id in re.finditer("\d+\.\d+\.\d+", str(row.get("código entidade ativa",""))):
+    for id in re.finditer("\d+\.\d+(\.\d+)?", str(row.get("código entidade ativa",""))):
         yield id.group(0)
     for id in re.finditer("\d+\.\d+\.\d+", str(row.get("código entidade sindical",""))):
         yield id.group(0)

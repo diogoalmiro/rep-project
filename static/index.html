@@ -110,7 +110,8 @@
 				"UNIÃO DE EMPREGADORES": "#0000FF"
 			}
 
-			fetch("/org_sindical_by_year").then(r => r.json()).then(data => new Chart(document.getElementById("org_sindical_year"), {
+			fetch("/orgs_by_year").then(r => r.json()).then(data => {
+				new Chart(document.getElementById("org_sindical_year"), {
 					type: 'bar',
 					data: {
 						labels: labels,
@@ -135,8 +136,8 @@
 							yAxes: [{ stacked: true, gridLines: { display: false }  }]
 						}
 					}
-				}))
-			fetch("/org_patronal_by_year").then(r => r.json()).then(data => new Chart(document.getElementById("org_patronal_year"), {
+				});
+				new Chart(document.getElementById("org_patronal_year"), {
 					type: 'bar',
 					data: {
 						labels: labels,
@@ -161,7 +162,8 @@
 							yAxes: [{ stacked: true, gridLines: { display: false }  }]
 						}
 					}
-				}))
+				});
+			});
 
 		</script>
 	</div>

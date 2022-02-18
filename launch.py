@@ -231,51 +231,49 @@ def export():
             download_name='data-export_%s.xlsx' % datetime.now().strftime("%Y-%m-%d-%H_%M_%S"),
             as_attachment=True)
 
-@app.route("/org_sindical_by_year", methods=['GET'])
+@app.route("/orgs_by_year", methods=['GET'])
 def org_sindical_by_year():
-    connection = sqlite3.connect(DATABASE_NAME)
     results = []
+    seen = set()
+    tmp_entidades = rep_database.json.loads(rep_database.getResponse("entidades", 0)).values()
+    entidades = []
+    for entidade in tmp_entidades:
+        id = f"{entidade['codEntG']}.{entidade['codEntE']}"
+        if id not in seen:
+            entidades.append(entidade)
+            seen.add(id)
     for ano in range(1996, date.today().year + 1):
-        cursor = connection.execute("""
-            SELECT Tipo, count() As Count FROM
-                (SELECT ID, min(Ano_Inicio) As Ano_Inicio, max(Ano_Fim) As Ano_Fim, Tipo, max(Activa) as Activa FROM
-                    (SELECT substr(ID, -length(ID), length(ID)-2) AS ID, cast(strftime("%Y", Data_Primeira_Actividade) as Number) as Ano_Inicio, cast(strftime("%Y", Data_Ultima_Actividade)as Number) as Ano_Fim, Tipo, Activa FROM Org_Sindical)
-                GROUP BY ID)
-            WHERE Ano_Inicio <= :ano AND (Ano_Fim > :ano OR Activa = 1)
-            GROUP BY Tipo""", {"ano": ano})
         curr_obj = {
             'ano': ano,
             'CONFEDERAÇÃO SINDICAL': 0,
             'FEDERAÇÃO SINDICAL': 0,
             'SINDICATO': 0,
-            'UNIÃO SINDICAL': 0
+            'UNIÃO SINDICAL': 0,
+            'CONFEDERAÇÃO DE EMPREGADORES': 0,
+            'FEDERAÇÃO DE EMPREGADORES': 0,
+            'ASSOCIAÇÃO DE EMPREGADORES': 0,
+            'UNIÃO DE EMPREGADORES': 0
         }
-        for row in cursor.fetchall():
-            curr_obj[row[0]] = row[1]
-        results.append(curr_obj)
-    return jsonify(results)
-
-@app.route("/org_patronal_by_year", methods=['GET'])
-def org_patronal_by_year():
-    connection = sqlite3.connect(DATABASE_NAME)
-    results = []
-    for ano in range(1996, date.today().year + 1):
-        cursor = connection.execute("""
-            SELECT Tipo, count() As Count FROM
-                (SELECT ID, min(Ano_Inicio) As Ano_Inicio, max(Ano_Fim) As Ano_Fim, Tipo, max(Activa) as Activa FROM
-                    (SELECT substr(ID, -length(ID), length(ID)-2) AS ID, cast(strftime("%Y", Data_Primeira_Actividade) as Number) as Ano_Inicio, cast(strftime("%Y", Data_Ultima_Actividade)as Number) as Ano_Fim, Tipo, Activa FROM Org_Patronal)
-                GROUP BY ID)
-            WHERE Ano_Inicio <= :ano AND (Ano_Fim > :ano OR Activa = 1)
-            GROUP BY Tipo""",{"ano": ano})
-        curr_obj = {
-            'ano': ano,
-            'CONFEDERAÇÃO PATRONAL': 0,
-            'FEDERAÇÃO PATRONAL': 0,
-            'ASSOCIAÇÂO PATRONAL': 0,
-            'UNIÃO PATRONAL': 0
-        }
-        for row in cursor.fetchall():
-            curr_obj[row[0]] = row[1]
+        for entidade in entidades:
+            start = date.fromisoformat(entidade['dataBteConstituicao']).year
+            end = date.fromisoformat(entidade.get('dataBteExtincao', date.today().isoformat())).year
+            if start <= ano < end:
+                if entidade['codEntG'] == 1:
+                    curr_obj['SINDICATO'] += 1
+                elif entidade['codEntG'] == 2:
+                    curr_obj['FEDERAÇÃO SINDICAL'] += 1
+                elif entidade['codEntG'] == 3:
+                    curr_obj['UNIÃO SINDICAL'] += 1
+                elif entidade['codEntG'] == 4:
+                    curr_obj['CONFEDERAÇÃO SINDICAL'] += 1
+                if entidade['codEntG'] == 5:
+                    curr_obj['ASSOCIAÇÃO DE EMPREGADORES'] += 1
+                elif entidade['codEntG'] == 6:
+                    curr_obj['FEDERAÇÃO DE EMPREGADORES'] += 1
+                elif entidade['codEntG'] == 7:
+                    curr_obj['UNIÃO DE EMPREGADORES'] += 1
+                elif entidade['codEntG'] == 8:
+                    curr_obj['CONFEDERAÇÃO DE EMPREGADORES'] += 1
         results.append(curr_obj)
     return jsonify(results)
 

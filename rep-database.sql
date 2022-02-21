@@ -1,245 +1,203 @@
---
--- SQL Instructions for Creating the REP Database
---
-
-DROP TABLE IF EXISTS Avisos_Greve;
-DROP TABLE IF EXISTS Outorgantes_Actos;
-DROP TABLE IF EXISTS Actos_Negociacao_Colectiva;
-DROP TABLE IF EXISTS Direccao_Org_Patronal;
-DROP TABLE IF EXISTS Direccao_Org_Sindical;
-DROP TABLE IF EXISTS Membros_Org_Sindical;
-DROP TABLE IF EXISTS Actos_Eleitorais_Org_Sindical;
-DROP TABLE IF EXISTS Relacoes_Entre_Org_Sindical;
-DROP TABLE IF EXISTS Mencoes_BTE_Org_Patronal;
-DROP TABLE IF EXISTS Mencoes_BTE_Org_Sindical;
-DROP TABLE IF EXISTS Org_Sindical;
-DROP TABLE IF EXISTS Org_Patronal;
-DROP TABLE IF EXISTS Sectores_Profissionais;
-
-
-CREATE TABLE Sectores_Profissionais (
-		Sector         VARCHAR(100) NOT NULL PRIMARY KEY,
-		Nome_Abrev     VARCHAR(40),
-		Salario_Medio  NUMERIC
+PRAGMA foreign_keys = ON;
+--- RECREATE DGERT DATABASE LOCALY
+CREATE TABLE IF NOT EXISTS Entidades(
+  codEntG INTEGER,
+  codEntE INTEGER,
+  numAlt INTEGER,
+  sigla TEXT,
+  nomeEntidade TEXT,
+  codigoPostalEntidade TEXT,
+  idDistrito INTEGER,
+  distritoDescricao TEXT,
+  estadoEntidade TEXT,
+  moradaEntidade TEXT,
+  localMoradaEntidade TEXT,
+  areaPostalEntidade TEXT,
+  dataBteConstituicao DATE,
+  numeroBteConstituicao INTEGER,
+  dataBteExtincao DATE,
+  numeroBteExtincao INTEGER,
+  telefoneEntidade TEXT,
+  faxEntidade TEXT,
+  PRIMARY KEY(codEntG, codEntE, numAlt)
 );
 
-CREATE TABLE Org_Patronal (
-	ID                       VARCHAR(10) PRIMARY KEY,
-	Tipo         		 VARCHAR(100),
-	Nome                     VARCHAR(100) NOT NULL,
-	Acronimo                 VARCHAR(100),
-	Nome_Organizacao_Pai     VARCHAR(100),
-	Concelho_Sede            VARCHAR(100),
-	Distrito_Sede            VARCHAR(100),
-	Codigo_Postal            VARCHAR(8),
-	Morada_Entidade 	 VARCHAR(100),
-	Local_Morada_Entidade 	 VARCHAR(100),
-	Area_Postal_Entidade 	 VARCHAR(100),
-	Telefone_Entidade 	 VARCHAR(9),
-	Fax_Entidade 		 VARCHAR(9),
-	Ambito_Geografico        VARCHAR(100),  
-	Sector                   VARCHAR(100),
-	Numero_Membros           INT,
-	Data_Primeira_Actividade DATE,
-	Data_Ultima_Actividade   DATE,
-	Activa       		 BOOLEAN,
-	Website                  VARCHAR(1000), 
-	FOREIGN KEY (Nome_Organizacao_Pai) REFERENCES Org_Patronal(ID),
-	FOREIGN KEY (Sector) REFERENCES Sectores_Profissionais(Sector)
-);
-	
-CREATE TABLE Org_Sindical (
-	ID                       VARCHAR(10) PRIMARY KEY,
-	Tipo                     VARCHAR(100),
-	Nome                     VARCHAR(100) NOT NULL,
-	Acronimo                 VARCHAR(100),
-	Nome_Organizacao_Pai     VARCHAR(100),
-	Concelho_Sede            VARCHAR(100),
-	Distrito_Sede            VARCHAR(100),
-	Codigo_Postal            VARCHAR(8),
-	Morada_Entidade 	 VARCHAR(100),
-	Local_Morada_Entidade 	 VARCHAR(100),
-	Area_Postal_Entidade 	 VARCHAR(100),
-	Telefone_Entidade 	 VARCHAR(9),
-	Fax_Entidade 		 VARCHAR(9),
-	Ambito_Geografico        VARCHAR(100),
-	Sector                   VARCHAR(100),
-	Numero_Membros           INT,
-	Data_Primeira_Actividade DATE,
-	Data_Ultima_Actividade   DATE,
-	Activa                   BOOLEAN,
-	Website                  VARCHAR(1000),
-	FOREIGN KEY (Nome_Organizacao_Pai) REFERENCES Org_Sindical(ID),
-	FOREIGN KEY (Sector) REFERENCES Sectores_Profissionais(Sector)
+CREATE TABLE IF NOT EXISTS Processos(
+  tipo INTEGER,
+  especie INTEGER,
+  subEspecie INTEGER,
+  numero INTEGER,
+  ano INTEGER,
+  controlo INTEGER,
+  servico TEXT,
+  codAssunto INTEGER,
+  assunto TEXT,
+  designacao TEXT,
+  titulo TEXT,
+  dataAberturaProcesso DATE,
+  PRIMARY KEY(tipo,especie,subEspecie,numero,ano,servico)
 );
 
-CREATE TABLE Mencoes_BTE_Org_Sindical (
-	ID_Organizacao_Sindical               VARCHAR(10),
-	URL                                   VARCHAR(100),
-	Ano                                   INT,
-	Numero                                INT,
-	Serie                                 INT,
-	Descricao                             VARCHAR(100),
-	Mudanca_Estatuto                      BOOLEAN,
-	Eleicoes                              BOOLEAN,
-	Confianca                             NUMERIC,
-	PRIMARY KEY (ID_Organizacao_Sindical,Ano,Numero,Serie),
-	FOREIGN KEY (ID_Organizacao_Sindical) REFERENCES Org_Sindical(ID)
+CREATE TABLE IF NOT EXISTS EleicoesCorposGerentes(
+  codEntG INTEGER,
+  codEntE INTEGER,
+  numAlt INTEGER,
+  numeroEleicao INTEGER,
+  dataEleicao DATE,
+  mesesMandato INTEGER,
+  dataBTE DATE,
+  numBTE INTEGER,
+  serieBTE INTEGER,
+  numMaxEfect INTEGER,
+  numMinEfect INTEGER,
+  numMaxSupl INTEGER,
+  numMinSupl INTEGER,
+  numHEfect INTEGER,
+  numHSupl INTEGER,
+  numMEfect INTEGER,
+  numMSupl INTEGER,
+  tipo INTEGER,
+  especie INTEGER,
+  subEspecie INTEGER,
+  numero INTEGER,
+  ano INTEGER,
+  controlo INTEGER,
+  servico TEXT,
+  FOREIGN KEY(codEntG, codEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt),
+  FOREIGN KEY(tipo,especie,subEspecie,numero,ano,servico) REFERENCES Processos(tipo,especie,subEspecie,numero,ano,servico),
+  PRIMARY KEY(codEntG, codEntE, numAlt,tipo,especie,subEspecie,numero,ano,servico) --  we might be missing a field
 );
 
-CREATE TABLE Mencoes_BTE_Org_Patronal (
-	ID_Organizacao_Patronal               VARCHAR(10),
-	URL                     	      VARCHAR(100),
-	Ano                                   INT,
-	Numero                                INT,
-	Serie                                 INT,
-	Descricao                             VARCHAR(100),
-	Mudanca_Estatuto                      BOOLEAN,
-	Eleicoes                              BOOLEAN,
-	Confianca                             NUMERIC,
-	PRIMARY KEY (ID_Organizacao_Patronal,Ano,Numero,Serie),
-	FOREIGN KEY (ID_Organizacao_Patronal) REFERENCES Org_Patronal(ID)
+CREATE TRIGGER IF NOT EXISTS create_Processo_when_insert_EleicaoCorpoGerentes
+  BEFORE INSERT ON EleicoesCorposGerentes
+  WHEN (SELECT count() FROM Processos WHERE tipo = NEW.tipo AND especie = NEW.especie AND subEspecie = NEW.subEspecie AND numero = NEW.numero AND ano = NEW.ano AND servico = ifnull(NEW.servico,"")) = 0
+  BEGIN
+    INSERT INTO Processos(tipo,especie,subEspecie,numero,ano,controlo,servico,codAssunto,assunto,designacao,titulo)
+    VALUES(
+      NEW.tipo,NEW.especie,NEW.subEspecie,NEW.numero,NEW.ano,NEW.controlo,ifnull(NEW.servico,""),
+      120,"ELEIÇÃO DE CORPOS GERENTES","ELEIÇÃO DE CORPOS GERENTES DE ASS. " || CASE WHEN NEW.codEntG < 5 THEN "SINDICAL" ELSE "PATRONAL" END, "DEDUCED WHEN EleicaoCorpoGerentes INSERTED"); -- titulo e dataAberturaProcesso empty
+  END;
+
+CREATE TABLE IF NOT EXISTS AlteracoesEstatutos(
+  tipo INTEGER,
+  especie INTEGER,
+  subEspecie INTEGER,
+  numero INTEGER,
+  ano INTEGER,
+  controlo INTEGER,
+  codEntG INTEGER,
+  codEntE INTEGER,
+  numAlt INTEGER,
+  numSeqAlt INTEGER,
+  numBTE INTEGER,
+  dataBTE DATE,
+  serieBTE INTEGER,
+  ambitoGeografico TEXT,
+  servico TEXT,
+  FOREIGN KEY(codEntG, codEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt),
+  FOREIGN KEY(tipo,especie,subEspecie,numero,ano,servico) REFERENCES Processos(tipo,especie,subEspecie,numero,ano,servico)
+  PRIMARY KEY(codEntG, codEntE, numAlt, numSeqAlt)
 );
 
-CREATE TABLE Relacoes_Entre_Org_Sindical (
-	ID_Organizacao_Sindical_1  VARCHAR(10),
-	ID_Organizacao_Sindical_2  VARCHAR(10),
-	Tipo_de_Relacao            VARCHAR(100),
-	Data                       DATE,
-	PRIMARY KEY (ID_Organizacao_Sindical_1,ID_Organizacao_Sindical_2),
-	FOREIGN KEY (ID_Organizacao_Sindical_1) REFERENCES Org_Sindical(ID),
-	FOREIGN KEY (ID_Organizacao_Sindical_2) REFERENCES Org_Sindical(ID)
+CREATE TRIGGER IF NOT EXISTS create_Processo_when_insert_AlteracoesEstatutos
+  BEFORE INSERT ON AlteracoesEstatutos
+  WHEN (SELECT count() FROM Processos WHERE tipo = NEW.tipo AND especie = NEW.especie AND subEspecie = NEW.subEspecie AND numero = NEW.numero AND ano = NEW.ano AND servico = ifnull(NEW.servico,"")) = 0
+  BEGIN
+    INSERT INTO Processos(tipo,especie,subEspecie,numero,ano,controlo,servico,codAssunto,assunto,designacao,titulo)
+    VALUES(
+      NEW.tipo,NEW.especie,NEW.subEspecie,NEW.numero,NEW.ano,NEW.controlo,ifnull(NEW.servico,""),
+      123,"ALTERAÇÃO DE ESTATUTOS","ALTERAÇÃO DE ESTATUTOS DE ASS. " || CASE WHEN NEW.codEntG < 5 THEN "SINDICAL" ELSE "PATRONAL" END, "DEDUCED WHEN AltearcoesEstatutos INSERTED"); -- titulo e dataAberturaProcesso empty
+  END;
+
+CREATE TABLE IF NOT EXISTS PK_IRCTs(
+  numero INTEGER,
+  numeroSequencial INTEGER,
+  ano INTEGER,
+  tipoConvencaoCodigo INTEGER,
+  PRIMARY KEY(numero, numeroSequencial, ano, tipoConvencaoCodigo)
 );
 
-CREATE TABLE Actos_Eleitorais_Org_Sindical (
-	ID_Organizacao_Sindical               VARCHAR(10),
-	Data                                  DATE,
-	Numero_Membros_Cadernos_Eleitoriais   INT,
-	Numero_Membros_Inscritos              INT,
-	Numero_Membros_Votantes               INT,
-	Meses_de_Mandato                      INT,
-	Numero_Listas_Concorrentes            INT,
-	PRIMARY KEY (ID_Organizacao_Sindical,Data),
-	FOREIGN KEY (ID_Organizacao_Sindical) REFERENCES Org_Sindical(ID)
+CREATE TABLE IF NOT EXISTS IRCTs(
+  numero INTEGER,
+  numeroSequencial INTEGER,
+  ano INTEGER,
+  tipoConvencaoCodigo INTEGER,
+  tipoConvencaoDescr TEXT,
+  tipoConvencaoDescrLong TEXT,
+  tipoConvencaoOrdem INTEGER,
+  naturezaCodigo INTEGER,
+  naturezaDescricao TEXT,
+  nomeCC TEXT,
+  ambitoGeograficoIRCT TEXT,
+  ambitoGeograficoCodeIRCT INTEGER,
+  numBTE INTEGER,
+  dataBTE DATE,
+  serieBTE INTEGER,
+  ambGeg TEXT,
+  dataEfeitos DATE,
+  area INTEGER,
+  dist INTEGER,
+  conc INTEGER,
+  prov INTEGER,
+  codCAE TEXT,
+  revCAE TEXT,
+  FOREIGN KEY(numero, numeroSequencial, ano, tipoConvencaoCodigo) REFERENCES PK_IRCTs(numero, numeroSequencial, ano, tipoConvencaoCodigo)
+  --PRIMARY KEY(numero,numeroSequencial,ano,tipoConvencaoCodigo,tipoConvencaoOrdem,naturezaCodigo,ambitoGeograficoCodeIRCT,dist,conc,codCAE,revCAE)
 );
 
-CREATE TABLE Membros_Org_Sindical (
-	ID_Organizacao_Sindical               VARCHAR(10),
-	Data_Eleicao 			      DATE,
-	Data_Inicio                           INT,
-	Data_Fim                              INT,
-	Numero_Membros                        INT,
-	PRIMARY KEY (ID_Organizacao_Sindical,Data_Eleicao,Data_Inicio,Data_Fim),
-	FOREIGN KEY (ID_Organizacao_Sindical) REFERENCES Org_Sindical(ID)
-);
-	
-CREATE TABLE Direccao_Org_Sindical(
-	ID_Organizacao_Sindical     VARCHAR(10),
-	Nome_Pessoa                 VARCHAR(100),
-	Genero_Sexo                 VARCHAR(100),
-	Cargo                       VARCHAR(100),
-	Data_Eleicao  		    DATE,
-	Data_Inicio                 INT,
-	Data_Fim                    INT,
-	PRIMARY KEY (ID_Organizacao_Sindical,Nome_Pessoa,Data_Eleicao,Data_Inicio,Data_Fim),
-	FOREIGN KEY (ID_Organizacao_Sindical) REFERENCES Org_Sindical(ID)
-);
+CREATE TRIGGER IF NOT EXISTS create_pk_IRCTs_when_insert_IRCTs
+  BEFORE INSERT ON IRCTs
+  WHEN (SELECT count() FROM PK_IRCTs WHERE numero = NEW.numero AND numeroSequencial = NEW.numeroSequencial AND ano = NEW.ano AND tipoConvencaoCodigo = NEW.tipoConvencaoCodigo) = 0
+  BEGIN
+    INSERT INTO PK_IRCTs(numero, numeroSequencial, ano, tipoConvencaoCodigo)
+    VALUES(NEW.numero, NEW.numeroSequencial, NEW.ano, NEW.tipoConvencaoCodigo);
+  END;
 
-CREATE TABLE Actos_Negociacao_Colectiva (
-	ID                         INT,
-	ID_SEQUENCIAL        	   INT,
-	Nome_Acto                  VARCHAR(100),
-	Tipo_Acto                  VARCHAR(100),
-	Natureza                   VARCHAR(100),
-	Ano                        INT,
-	Numero                     INT,
-	Serie                      INT,
-	Data                       DATE,
-	URL                        VARCHAR(100),
-	Ambito_Geografico          VARCHAR(100),
-	PRIMARY KEY (ID,ID_SEQUENCIAL,Ano,Tipo_Acto)
+CREATE TABLE IF NOT EXISTS Outorgantes(
+  numero INTEGER,
+  numSeq INTEGER,
+  ano INTEGER,
+  tipoConv INTEGER,
+  CodEntG INTEGER,
+  CondEntE INTEGER,
+  numAlt INTEGER,
+  nomeEntE TEXT,
+  siglaEntE TEXT,
+  FOREIGN KEY (numero, numSeq, ano, tipoConv) REFERENCES PK_IRCTs(numero, numeroSequencial, ano, tipoConvencaoCodigo),
+  FOREIGN KEY (CodEntG, CondEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt),
+  PRIMARY KEY (numero, numSeq, ano, tipoConv, CodEntG, CondEntE, numAlt)
 );
 
-CREATE TABLE Outorgantes_Actos (
-	ID                         INT,
-	ID_SEQUENCIAL              INT,
-	Ano                        INT,
-	ID_Organizacao_Sindical    VARCHAR(10),
-	ID_Organizacao_Patronal    VARCHAR(10),
-	CAE                        VARCHAR(10),
-	Sector                     VARCHAR(100),
-	PRIMARY KEY (ID,ID_SEQUENCIAL,Ano,ID_Organizacao_Sindical,ID_Organizacao_Patronal,Sector),
-	FOREIGN KEY (ID,ID_SEQUENCIAL,Ano) REFERENCES Actos_Negociacao_Colectiva(ID,ID_SEQUENCIAL,Ano),
-	FOREIGN KEY (ID_Organizacao_Sindical) REFERENCES Org_Sindical(ID),
-	FOREIGN KEY (ID_Organizacao_Patronal) REFERENCES Org_Patronal(ID),
-	FOREIGN KEY (Sector) REFERENCES Sectores_Profissionais(Sector)
+CREATE TABLE IF NOT EXISTS Avisos_Greve(
+  _id_greve INTEGER PRIMARY KEY AUTOINCREMENT,
+  inicio_ano,
+  inicio_mes,
+  fim_ano,
+  fim_mes,
+  dadosExcel TEXT
 );
 
-CREATE TABLE Avisos_Greve (
-	Id_Entidade_Sindical      VARCHAR(10),
-	Ano_Inicio                INT,
-	Mes_Inicio                INT,
-	Entidade_Sindical         VARCHAR(100),
-	Entidade_Patronal         VARCHAR(100),
-	Ano_Fim                   INT,
-	Mes_Fim                   INT,
-	Duracao                   INT,
-	PRIMARY KEY(Id_Entidade_Sindical,Ano_Inicio,Mes_Inicio,Entidade_Sindical,Entidade_Patronal,Ano_Fim,Mes_Fim,Duracao),
-        FOREIGN KEY (Id_Entidade_Sindical) REFERENCES Org_Sindical(ID)
+CREATE TABLE IF NOT EXISTS Avisos_Greve_Entidades(
+  _id_greve INTEGER,
+  codEntG INTEGER,
+  codEntE INTEGER,
+  numAlt INTEGER,
+  FOREIGN KEY (_id_greve) REFERENCES Avisos_Greve(_id_greve),
+  FOREIGN KEY (codEntG, codEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt)
 );
 
-
-CREATE TRIGGER Mencoes_BTE_Org_Sindical_update AFTER UPDATE ON Mencoes_BTE_Org_Sindical BEGIN
-		UPDATE Mencoes_BTE_Org_Sindical
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
-		WHERE 
-			ID_Organizacao_Sindical = NEW.ID_Organizacao_Sindical AND
-			Ano = NEW.Ano AND
-			Numero = NEW.Numero AND
-			Serie = NEW.Serie;
-END;
-
-CREATE TRIGGER Mencoes_BTE_Org_Sindical_insert AFTER INSERT ON Mencoes_BTE_Org_Sindical BEGIN
-		UPDATE Mencoes_BTE_Org_Sindical
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
-		WHERE ID_Organizacao_Sindical = NEW.ID_Organizacao_Sindical AND
-			Ano = NEW.Ano AND
-			Numero = NEW.Numero AND
-			Serie = NEW.Serie; 
-END;
-
-CREATE TRIGGER Mencoes_BTE_Org_Patronal_update AFTER UPDATE ON Mencoes_BTE_Org_Patronal BEGIN
-		UPDATE Mencoes_BTE_Org_Patronal
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
-		WHERE ID_Organizacao_Patronal = NEW.ID_Organizacao_Patronal AND
-			Ano = NEW.Ano AND
-			Numero = NEW.Numero AND
-			Serie = NEW.Serie;
-END;
-
-CREATE TRIGGER Mencoes_BTE_Org_Patronal_insert AFTER INSERT ON Mencoes_BTE_Org_Patronal BEGIN
-		UPDATE Mencoes_BTE_Org_Patronal
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
-		WHERE ID_Organizacao_Patronal = NEW.ID_Organizacao_Patronal AND
-			Ano = NEW.Ano AND
-			Numero = NEW.Numero AND
-			Serie = NEW.Serie;
-END;
-
-CREATE TRIGGER Actos_Negociacao_Colectiva_update AFTER UPDATE ON Actos_Negociacao_Colectiva BEGIN
-		UPDATE Actos_Negociacao_Colectiva
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
-		WHERE ID = NEW.ID AND
-			ID_SEQUENCIAL = NEW.ID_SEQUENCIAL AND
-			Ano = NEW.Ano AND
-			Tipo_Acto = NEW.Tipo_Acto;
-END;
-
-CREATE TRIGGER Actos_Negociacao_Colectiva_insert AFTER INSERT ON Actos_Negociacao_Colectiva BEGIN
-		UPDATE Actos_Negociacao_Colectiva
-		SET    URL = "http://bte.gep.msess.gov.pt/completos/" || NEW.Ano || "/bte" || NEW.Numero || "_" || NEW.Ano || ".pdf"
-		WHERE ID = NEW.ID AND
-			ID_SEQUENCIAL = NEW.ID_SEQUENCIAL AND
-			Ano = NEW.Ano AND
-			Tipo_Acto = NEW.Tipo_Acto;
-END;
+--- USEFULL VIEWS
+CREATE VIEW IF NOT EXISTS Organizacoes(
+	codEntG, codEntE, numAlt, sigla, nomeEntidade, codigoPostalEntidade, idDistrito, distritoDescricao, estadoEntidade,
+	moradaEntidade, localMoradaEntidade, areaPostalEntidade, telefoneEntidade, faxEntidade
+) AS SELECT 
+	codEntG, codEntE, numAlt, sigla, nomeEntidade, codigoPostalEntidade, idDistrito, distritoDescricao, estadoEntidade,
+	moradaEntidade, localMoradaEntidade, areaPostalEntidade, telefoneEntidade, faxEntidade 
+FROM 
+	Entidades
+JOIN
+	(SELECT codEntG as G, codEntE as E, max(numAlt) as N FROM Entidades GROUP BY codEntG, codEntE) AS max_numAlt
+WHERE
+	Entidades.codEntG = max_numAlt.G AND
+	Entidades.codEntE = max_numAlt.E AND
+	Entidades.numAlt = max_numAlt.N;

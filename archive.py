@@ -72,24 +72,16 @@ def archive_entity(entidade, tipo_entidade, conn):
 
 def main():
     conn = sqlite3.connect('rep-database.db')
-    conn.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta")
-
     entidades_path.mkdir(parents=True, exist_ok=True)
     distritos = {}
     sorted_nomes = []
-    colname = ['id', 'nome', 'distrito_sede', 'activa', 'acronimo', 'data_inicio', 'data_fim', 'website']
-    for org_sindical in conn.execute('SELECT ID, NOME, DISTRITO_SEDE, act2str(ACTIVA) as ACTIVA, Acronimo, Data_Primeira_Actividade, Data_Ultima_Actividade, website FROM Org_Sindical').fetchall():
-        if org_sindical[2] not in distritos:
-            distritos[org_sindical[2]] = []
-        distritos[org_sindical[2]].append({'id':org_sindical[0], 'nome':org_sindical[1]})
-        sorted_nomes.append({'id':org_sindical[0], 'nome':org_sindical[1]})
-        archive_entity({col: org_sindical[i] or "" for i, col in enumerate(colname)},'sindical', conn)
-    for org_patronal in conn.execute('SELECT ID, NOME, DISTRITO_SEDE, act2str(ACTIVA) as ACTIVA, Acronimo, Data_Primeira_Actividade, Data_Ultima_Actividade, website FROM Org_Patronal').fetchall():
-        if org_patronal[2] not in distritos:
-            distritos[org_patronal[2]] = []
-        distritos[org_patronal[2]].append({'id':org_patronal[0], 'nome':org_patronal[1]})
-        sorted_nomes.append({'id':org_patronal[0], 'nome':org_patronal[1]})
-        archive_entity({col: org_patronal[i] or "" for i, col in enumerate(colname)},'patronal', conn)
+    for entidade in conn.execute('SELECT * FROM Organizacoes'):
+        tipo_entidade = int(entidade['id'][0]) < 5 ? 'Sindical' : 'Patronal'
+        if entidade['distritoDescricao'] not in distritos:
+            distritos[entidade['distritoDescricao']] = []
+        distritos[entidade['distritoDescricao']].append(entidade)
+        sorted_nomes.append(entidade)
+        archive_entity(entidade, tipo_entidade, conn)
     
     file = entidades_path/"bydistrito.html"
     template_distrito = env.get_template("bydistrito.html")

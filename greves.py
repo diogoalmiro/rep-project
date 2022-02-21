@@ -14,41 +14,15 @@ def main():
 
     names = (a for a in xl.sheet_names if re.match('^\d{4}$', a)) # filter the sheet names to only the years
 
-    connection.execute("""DROP TABLE IF EXISTS Avisos_Greve_New""")
-    connection.execute("""CREATE TABLE Avisos_Greve_New (
-        ID_Aviso_Greve INTEGER PRIMARY KEY AUTOINCREMENT,
-        Ano_Inicio                INT,
-        Mes_Inicio                INT,
-        Ano_Fim                   INT,
-        Mes_Fim                   INT,
-        CAE                       TEXT
-    )""")
+    insertstmn="""INSERT INTO Avisos_Greve(
+        inicio_ano,
+        inicio_mes,
+	    fim_ano,
+        fim_mes,
+        dadosExcel) VALUES (:ano_inicio, :mes_inicio, :ano_fim, :mes_fim, :dadosExcel)"""
 
-    connection.execute("""DROP TABLE IF EXISTS Avisos_Greve_Participante_Sindical""")
-    connection.execute("""CREATE TABLE Avisos_Greve_Participante_Sindical (
-        ID_Aviso_Greve INTEGER,
-        ID_Entidade_Sindical INTEGER,
-        FOREIGN KEY (ID_Aviso_Greve) REFERENCES Avisos_Greve_New(ID_Aviso_Greve),
-        FOREIGN KEY (ID_Entidade_Sindical) REFERENCES Org_Sindical(ID)
-    )""")
-    connection.execute("""DROP TABLE IF EXISTS Avisos_Greve_Participante_Patronal""")
-    connection.execute("""CREATE TABLE Avisos_Greve_Participante_Patronal (
-        ID_Aviso_Greve INTEGER,
-        ID_Entidade_Patronal INTEGER,
-        FOREIGN KEY (ID_Aviso_Greve) REFERENCES Avisos_Greve_New(ID_Aviso_Greve),
-        FOREIGN KEY (ID_Entidade_Patronal) REFERENCES Org_Patronal(ID)
-    )""")
-
-    insertstmn="""INSERT INTO Avisos_Greve_New(
-    Ano_Inicio,
-    Mes_Inicio,
-	Ano_Fim,
-    Mes_Fim,
-    CAE) VALUES (:ano_inicio, :mes_inicio, :ano_fim, :mes_fim, :cae)"""
-
-    insertsindical = """INSERT INTO Avisos_Greve_Participante_Sindical(ID_Aviso_Greve, ID_Entidade_Sindical) VALUES (:id_aviso_greve, :id_entidade_sindical)"""
-    insertpatronal = """INSERT INTO Avisos_Greve_Participante_Patronal(ID_Aviso_Greve, ID_Entidade_Patronal) VALUES (:id_aviso_greve, :id_entidade_patronal)"""
-
+    insertentidade = """INSERT INTO Avisos_Greve_Entidades(_id_greve, codEntG, codEntE, numAlt) VALUES (:id_aviso_greve, :codEntG, :codEntE, :numAlt)"""
+    
     for name in names:
         print("Processing %s" % name, file=sys.stderr)
         sh: pd.DataFrame = xl.parse(name) # read the sheet
@@ -65,33 +39,28 @@ def main():
             fim_ano = get_end_year_value(row) or ano
             fim_mes = get_end_month_value(row)
             
-            cae = " / ".join(re.findall("\d+", str(row.get("cae","")))).strip()
-            
-            cursor = connection.execute(insertstmn, {"ano_inicio":inicio_ano, "mes_inicio":inicio_mes, "ano_fim":fim_ano, "mes_fim":fim_mes, "cae":cae})
+            cursor = connection.execute(insertstmn, {"ano_inicio":inicio_ano, "mes_inicio":inicio_mes, "ano_fim":fim_ano, "mes_fim":fim_mes, "dadosExcel": row.to_json()})
 
             all_entities_ids = set(all_ids_iter(row, connection))
             for id in all_entities_ids:
-                sindical = connection.execute("""SELECT ID FROM Org_Sindical WHERE ID LIKE :id""", {"id":id}).fetchone()
-                if sindical:
-                    connection.execute(insertsindical, {"id_aviso_greve":cursor.lastrowid, "id_entidade_sindical":id})
-                patronal = connection.execute("""SELECT ID FROM Org_Patronal WHERE ID LIKE :id""", {"id":id}).fetchone()
-                if patronal:
-                    connection.execute(insertpatronal, {"id_aviso_greve":cursor.lastrowid, "id_entidade_patronal":id})
-            
+                codEntG, codEntE, numAlt, *_ = id.split(".")+[None,None,None]
+                assert codEntG is not None, f"codEntG is None id: {id}" 
+                if codEntG is None:
+                    continue
+                if numAlt is None:
+                    entidade = connection.execute("""SELECT codEntG, codEntE, numAlt FROM Organizacoes WHERE codEntG = :codEntG AND codEntE = :codEntE""", (codEntG,codEntE)).fetchone()
+                else:
+                    entidade = connection.execute("""SELECT codEntG, codEntE, numAlt FROM Entidades WHERE codEntG = :codEntG  AND codEntE = :codEntE  AND numAlt = :numAlt""", (codEntG,codEntE,numAlt)).fetchone()
+                if entidade:
+                    connection.execute(insertentidade, {"id_aviso_greve":cursor.lastrowid, "codEntG":entidade[0], "codEntE":entidade[1], "numAlt":entidade[2]})
             count+=1
             connection.commit()
         print("Inserted %d rows" % count, file=sys.stderr)
 
 def get_ID_by_name_or_acronimo(name, connection):
     cursor = connection.cursor()
-    cursor.execute("SELECT ID FROM Org_Sindical WHERE Nome LIKE ? OR Acronimo LIKE ?", (name,name,))
-    if cursor.rowcount == 0:
-        cursor.execute("SELECT ID FROM Org_Patronal WHERE Nome LIKE ? OR Acronimo LIKE ?", (name,name,))
-        if cursor.rowcount == 0:
-            return None
-        else:
-            return cursor.fetchone(), "ID_Entidade_Patronal"
-    return cursor.fetchone(), "ID_Entidade_Sindical"
+    cursor.execute("SELECT codEntG || \".\" || codEntE || \".\" || numAlt FROM Entidades WHERE nomeEntidade LIKE ? OR sigla LIKE ?", (name,name,))
+    return cursor.fetchone()
 
 def all_formated_ids(row: pd.Series):
     for id in re.finditer("\d+\.\d+\.\d+", str(row.get("código entidade ativa",""))):
@@ -104,7 +73,7 @@ def all_ids_from_columns(row: pd.Series, connection):
         for nome in str(row.get(colname,"")).split("/"):
             for subnome in nome.split("-"):
                 if subnome.strip() != "":
-                    id = get_ID_by_name_or_acronimo(subnome.strip(), connection)[0]
+                    id = get_ID_by_name_or_acronimo(subnome.strip(), connection)
                     if id:
                         yield id[0]
         

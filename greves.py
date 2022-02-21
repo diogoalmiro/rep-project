@@ -14,6 +14,10 @@ def main():
 
     names = (a for a in xl.sheet_names if re.match('^\d{4}$', a)) # filter the sheet names to only the years
 
+    connection.execute("""PRAGMA foreign_keys = ON;""") # enable delete on cascade for avisos_greve_entidades
+    connection.execute("""DELETE FROM Avisos_Greve;""") # clear 
+    connection.execute("""DELETE FROM Avisos_Greve_Entidades;""") # clear (delete on cascade not working?)
+
     insertstmn="""INSERT INTO Avisos_Greve(
         inicio_ano,
         inicio_mes,

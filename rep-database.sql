@@ -182,8 +182,9 @@ CREATE TABLE IF NOT EXISTS Avisos_Greve_Entidades(
   codEntG INTEGER,
   codEntE INTEGER,
   numAlt INTEGER,
-  FOREIGN KEY (_id_greve) REFERENCES Avisos_Greve(_id_greve),
-  FOREIGN KEY (codEntG, codEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt)
+  FOREIGN KEY (_id_greve) REFERENCES Avisos_Greve(_id_greve) ON DELETE CASCADE,
+  FOREIGN KEY (codEntG, codEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt),
+  PRIMARY KEY (_id_greve, codEntG, codEntE, numAlt)
 );
 
 --- USEFULL VIEWS

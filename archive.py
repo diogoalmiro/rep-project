@@ -1,10 +1,8 @@
-from distutils.file_util import write_file
-from json import load
+from json import loads
 import sqlite3
-from flask import render_template
 from pathlib import Path
 
-from jinja2 import Environment, FileSystemLoader, Template
+from jinja2 import Environment, FileSystemLoader
 
 data_path = Path("static/data/")
 entidades_path = (data_path/"entidades")

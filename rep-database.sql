@@ -190,10 +190,25 @@ CREATE TABLE IF NOT EXISTS Avisos_Greve_Entidades(
 --- USEFULL VIEWS
 CREATE VIEW IF NOT EXISTS Organizacoes(
 	codEntG, codEntE, numAlt, sigla, nomeEntidade, codigoPostalEntidade, idDistrito, distritoDescricao, estadoEntidade,
-	moradaEntidade, localMoradaEntidade, areaPostalEntidade, telefoneEntidade, faxEntidade
+	moradaEntidade, localMoradaEntidade, areaPostalEntidade, telefoneEntidade, faxEntidade, 
+  Tipo,
+  dataBteConstituicao,
+  dataBteExtincao
 ) AS SELECT 
 	codEntG, codEntE, numAlt, sigla, nomeEntidade, codigoPostalEntidade, idDistrito, distritoDescricao, estadoEntidade,
-	moradaEntidade, localMoradaEntidade, areaPostalEntidade, telefoneEntidade, faxEntidade 
+	moradaEntidade, localMoradaEntidade, areaPostalEntidade, telefoneEntidade, faxEntidade,
+  CASE 
+    WHEN codEntG = 1 THEN 'SINDICATO'
+    WHEN codEntG = 2 THEN 'FEDERAÇÃO SINDICAL'
+    WHEN codEntG = 3 THEN 'UNIÃO SINDICAL'
+    WHEN codEntG = 4 THEN 'CONFEDERAÇÃO SINDICAL'
+    WHEN codEntG = 5 THEN 'ASSOCIAÇÃO DE EMPREGADORES'
+    WHEN codEntG = 6 THEN 'FEDERAÇÃO DE EMPREGADORES'
+    WHEN codEntG = 7 THEN 'UNIÃO DE EMPREGADORES'
+    WHEN codEntG = 8 THEN 'CONFEDERAÇÃO DE EMPREGADORES'
+  END as Tipo,
+  dataBteConstituicao,
+  dataBteExtincao
 FROM 
 	Entidades
 JOIN

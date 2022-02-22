@@ -1,0 +1,58 @@
+{% extends "archive_base.html" %}
+{% block content %}
+{{ super()}}
+<table class="table table-striped">
+    <thead class="bg-primary text-white">
+        <tr>
+            <th>Tipo</th>
+            <th>Entidade {{ 'Sindical' if row['codEntG'] < 5 else 'Patronal'}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th>ID</td>
+                <td>
+                    {{row['codEntG']}}.{{row['codEntE']}}
+                    <small>(
+                        {% for srow in cursor.execute("SELECT codEntG, codEntE, numAlt FROM Entidades WHERE codEntG = ? AND codEntE = ? ORDER BY numAlt",(row["codEntG"],row["codEntE"])).fetchall() %}
+                            {% if srow[2] != row['numAlt'] %}
+                                <a href="{{srow[0]}}.{{srow[1]}}.{{srow[2]}}.html">{{srow[0]}}.{{srow[1]}}.{{srow[2]}}</a>
+                            {% else %}
+                                <span>{{srow[0]}}.{{srow[1]}}.{{srow[2]}}</span>
+                            {% endif %}
+                        {% endfor %}
+                    )</small>
+                        
+                    
+                </td>
+
+        </tr>
+        <tr>
+            <th>Nome</td>
+            <td>{{row['nomeEntidade']}}</td>
+        </tr>
+        <tr>
+            <th>Sigla</th>
+            <td>{{row['sigla']}}</td>
+        </tr>
+        <tr>
+            <th>Distrito</th>
+            <td>{{row['distritoDescricao']}}</td>
+        </tr>
+        <tr>
+            <th>Estado</th>
+            <td>{{row['estadoEntidade']}}</td>
+        </tr>
+        <tr>
+            <th>Constituição</th>
+            <td>{{ row['dataBteConstituicao'] }}</td>
+        </tr>
+        {% if row['dataBteExtincao'] %}
+        <tr>
+            <th>Extinção</th>
+            <td>{{ row['dataBteConstituicao'] }}</td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endblock %}

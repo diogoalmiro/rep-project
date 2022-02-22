@@ -68,15 +68,23 @@ def server_side_search():
     search["setor"] = request.args.get('setor', "")
     search["inicio"] = request.args.get("ano-inicio", type=int)
     search["fim"] = request.args.get("ano-fim",type=int)
+    search["estado"] = request.args.get("estado", "")
     search["page"] = request.args.get("page", type=int)
 
     sqlformat = {}
-    sqlformat["table"] = search["table"]
+    if search["table"] == "Unions":
+        sqlformat["table"] = [1,2,3,4] 
+    elif search["table"] == "Employees":
+        sqlformat["table"] = [5,6,7,8]
+    else:
+        sqlformat["table"] = [1,2,3,4,5,6,7,8]
+    sqlformat["table"] = f"{','.join(str(x) for x in sqlformat['table'])}"
     sqlformat["term"] = "%{}%".format(search["term"].upper())
     sqlformat["distrito"]  = "%{}%".format(search["distrito"])
     sqlformat["setor"] = "%{}%".format(search["setor"])
     sqlformat["inicio"] = "{}-01-01".format(search["inicio"] or "0000")
     sqlformat["fim"] = "{}-12-31".format(search["fim"] or date.today().year)
+    sqlformat["estado"] = "%{}%".format(search["estado"])
     sqlformat["offset"] = (search["page"] or 0) * ROWS_PER_PAGE
     sqlformat["rows_per_page"] = ROWS_PER_PAGE
 
@@ -84,24 +92,16 @@ def server_side_search():
 
     connection = sqlite3.connect(DATABASE_NAME)
     connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta")
-    cursor = connection.execute("""
-        SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, act2str(Activa)
-        FROM Org_Patronal
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
-        AND ifnull(Distrito_Sede,"") LIKE :distrito
-        AND ifnull(Sector,"") LIKE :setor
-        AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
-        AND ifnull(Data_Ultima_Actividade,"0000-01-01") <= :fim
-        AND :table NOT LIKE "Unions"
-        UNION
-        SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, act2str(Activa)
-        FROM Org_Sindical
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
-        AND ifnull(Distrito_Sede,"") LIKE :distrito
-        AND ifnull(Sector,"") LIKE :setor
-        AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
-        AND ifnull(Data_Ultima_Actividade,"0000-01-01") <= :fim
-        AND :table NOT LIKE "Employees"
+    cursor = connection.execute(f"""
+        SELECT Tipo, nomeEntidade, ifnull(sigla, ""), distritoDescricao, estadoEntidade, codEntG, codEntE, numAlt
+        FROM Organizacoes
+        WHERE 
+            (nomeEntidade LIKE :term OR ifnull(sigla,"") LIKE :term OR (codEntG || "." || codEntE) LIKE :term OR (codEntG || "." || codEntE || "." || numAlt) LIKE :term)
+        AND ifnull(distritoDescricao,"") LIKE :distrito
+        AND dataBteConstituicao >= :inicio
+        AND ifnull(dataBteExtincao, "0000-01-01") <= :fim
+        AND codEntG in ({sqlformat["table"]})
+        AND estadoEntidade LIKE :estado
         LIMIT :rows_per_page OFFSET :offset
     """, sqlformat)
     for row in cursor.fetchall():

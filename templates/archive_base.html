@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../style.css">
     <link rel=stylesheet type=text/css href="/static/css/bootstrap.min.css" />
-    <title>DOT - Arquivo</title>
+    {% block head %}{% endblock %}
 </head>
 <body>
     <div class="container">
@@ -22,18 +22,28 @@
 					<a class="nav-link mx-2" href="/dashboard-search/">Pesquisa</a>
 				</li>
 				<li class="nav-item active">
-					<a class="nav-link mx-2" href="/static/data/">Arquivo</a>
+					<a class="nav-link mx-2" href="/static/data/index.html">Arquivo</a>
 				</li>
 			</ul>
 		</nav>
-        <nav class="navbar navbar-light navbar-expand h5 p-2">
-            <ul class="navbar-nav align-items-baseline">
-                <li class="nav-link"><a href="entidades/bynome.html" class="nav-link">Entidades por nome</a></li>
-                <li class="nav-link"><a href="entidades/bydistrito.html" class="nav-link">Entidades por distrito</a></li>
-            </ul>
-        </nav>
-        <p>
-            O arquivo de dados permite explorar as entidades sindicais e patronais registadas no sistema e todas as informações relacionadas com elas.
-        </p>
+		{% block content %}
+		<table class="table table-striped">
+			<thead class="bg-primary text-white">
+				<tr>
+					<th>Chave</th>
+					<th>Valor</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key in row.keys() %}
+				<tr>
+					<th>{{key}}</td>
+					<td>{{row[key]}}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endblock %}
     </div>
 </body>
+</html>

@@ -256,7 +256,10 @@ def org_sindical_by_year():
         }
         for entidade in entidades:
             start = date.fromisoformat(entidade['dataBteConstituicao']).year
-            end = date.fromisoformat(entidade.get('dataBteExtincao', date.today().isoformat())).year
+            if 'dataBteExtincao' in entidade:
+                end = date.fromisoformat(entidade['dataBteExtincao']).year
+            else:
+                end = date.today().year+1
             if start <= ano < end:
                 if entidade['codEntG'] == 1:
                     curr_obj['SINDICATO'] += 1

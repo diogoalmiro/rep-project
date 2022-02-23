@@ -25,12 +25,12 @@ def main():
         data_table_path.mkdir(parents=True, exist_ok=True)
         cursor.execute(f"PRAGMA table_info({table})")
         columns = [column for column in cursor.fetchall()]
-        pk = [row[5] for row in columns if row[5] > 0]
+        pk = [row[1] for row in columns if row[5] > 0]
         names = [row[1] for row in columns]
         agg_rows = []
         for row in cursor.execute(f"SELECT * FROM {table}").fetchall():
-            name = ".".join([str(row[col-1]) for col in pk])
             row = {names[i]: val for i, val in enumerate(row)}
+            name = ".".join([str(row[col]) for col in pk])
             agg_rows.append(dict(row, filename=name))
             env.get_template(f"{table}.html").stream(row=row, cursor=cursor, name=name, table=table, columns=columns).dump((data_table_path / f"{name}.html").open('w'))
         

@@ -1,58 +1,88 @@
 {% extends "archive_base.html" %}
 {% block content %}
-<table class="table table-striped">
-    <thead class="bg-primary text-white">
-        <tr>
-            <th>Tipo</th>
-            <th>Entidade {{ 'Sindical' if row['codEntG'] < 5 else 'Patronal'}}</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <th>ID</td>
-                <td>
-                    {{row['codEntG']}}.{{row['codEntE']}}
-                    <small>(
-                        {% for srow in cursor.execute("SELECT codEntG, codEntE, numAlt FROM Entidades WHERE codEntG = ? AND codEntE = ? ORDER BY numAlt",(row["codEntG"],row["codEntE"])).fetchall() %}
-                            {% if srow[2] != row['numAlt'] %}
-                                <a href="{{srow[0]}}.{{srow[1]}}.{{srow[2]}}.html">{{srow[0]}}.{{srow[1]}}.{{srow[2]}}</a>
-                            {% else %}
-                                <span>{{srow[0]}}.{{srow[1]}}.{{srow[2]}}</span>
-                            {% endif %}
-                        {% endfor %}
-                    )</small>
-                        
-                    
-                </td>
+<div class="row">
+    <div class="col-12 col-md-6">
+        <table class="table table-striped">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th>Tipo</th>
+                    <th>Entidade {{ 'sindical' if row['codEntG'] < 5 else 'de empregadores'}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Nome</td>
+                    <td>{{row['nomeEntidade']}}</td>
+                </tr>
+                <tr>
+                    <th>Sigla</th>
+                    <td>{{row['sigla']}}</td>
+                </tr>
+                <tr>
+                    <th>Distrito</th>
+                    <td>{{row['distritoDescricao']}}</td>
+                </tr>
+                <tr>
+                    <th>Estado</th>
+                    <td>{{row['estadoEntidade']}}</td>
+                </tr>
+                <tr>
+                    <th>Constituição</th>
+                    <td>{{ row['dataBteConstituicao'] }}</td>
+                </tr>
+                {% if row['dataBteExtincao'] %}
+                <tr>
+                    <th>Extinção</th>
+                    <td>{{ row['dataBteConstituicao'] }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-12 col-md-6">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Histórico da entidade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for srow in cursor.execute("SELECT codEntG, codEntE, numAlt FROM Entidades WHERE codEntG = ? AND codEntE = ? ORDER BY numAlt",(row["codEntG"],row["codEntE"])).fetchall() %}
+                <tr>
+                    <td>
+                        {% if srow[2] != row['numAlt'] %}
+                        <a href="{{srow[0]}}.{{srow[1]}}.{{srow[2]}}.html">{{srow[0]}}.{{srow[1]}}.{{srow[2]}}</a>
+                        {% else %}
+                        <span>{{srow[0]}}.{{srow[1]}}.{{srow[2]}}</span>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-12">
+        <table class="table table-striped">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th>Eleições dos corpos gerentes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for srow in cursor.execute("SELECT codEntG, codEntE, numAlt,tipo,especie,subEspecie,numero,ano,servico,dataEleicao FROM EleicoesCorposGerentes WHERE codEntG = ? AND codEntE = ? AND numAlt = ?",(row["codEntG"],row["codEntE"],row["numAlt"])).fetchall() %}
+                <tr>
+                    <td>
+                        {% set id = "%s.%s.%s.%s.%s.%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3], srow[4], srow[5], srow[6], srow[7], srow[8] ) %}
+                        {% set url = "../EleicoesCorposGerentes/%s.html" % id %}
+                        <a href="{{url}}">
+                            {{ srow[9] }}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
 
-        </tr>
-        <tr>
-            <th>Nome</td>
-            <td>{{row['nomeEntidade']}}</td>
-        </tr>
-        <tr>
-            <th>Sigla</th>
-            <td>{{row['sigla']}}</td>
-        </tr>
-        <tr>
-            <th>Distrito</th>
-            <td>{{row['distritoDescricao']}}</td>
-        </tr>
-        <tr>
-            <th>Estado</th>
-            <td>{{row['estadoEntidade']}}</td>
-        </tr>
-        <tr>
-            <th>Constituição</th>
-            <td>{{ row['dataBteConstituicao'] }}</td>
-        </tr>
-        {% if row['dataBteExtincao'] %}
-        <tr>
-            <th>Extinção</th>
-            <td>{{ row['dataBteConstituicao'] }}</td>
-        </tr>
-        {% endif %}
-    </tbody>
-</table>
+            </tbody>
+        </table>
+    </div>
+</div>
 {{ super()}}
 {% endblock %}

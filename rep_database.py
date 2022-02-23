@@ -6,6 +6,7 @@ import sqlite3
 import os
 from datetime import datetime
 import greves
+import archive2
 
 #com autenticacao
 def getResponse(tabela: str, ano: int = 0) -> List[object]:
@@ -48,9 +49,10 @@ def insert_from_table(cursor: sqlite3.Cursor, table: str, ano: int = 0):
 	errors = 0
 	for row in data:
 		keys = ",".join(row.keys())
-		values = ",".join(["?"] * len(row.keys()) )
+		valuesTemplate = ",".join(["?"] * len(row.keys()))
+		values = list(o.strip() if type(o) is str else o for o in row.values())
 		try:
-			cursor.execute(f"""INSERT INTO {table}({keys}) VALUES({values});""", list(row.values()))
+			cursor.execute(f"""INSERT INTO {table}({keys}) VALUES({valuesTemplate});""", values)
 		except Exception as e:
 			if "FOREIGN KEY constraint failed" in str(e):
 				pass
@@ -72,5 +74,8 @@ def main():
 	connection.commit()
 
 if __name__ == '__main__':
+	if 'rep-database.db' in os.listdir('.'):
+		os.remove('rep-database.db')
 	main()
 	greves.main()
+	archive2.main()

@@ -26,12 +26,23 @@
 				</li>
 			</ul>
 		</nav>
+		<nav class="navbar navbar-light navbar-expand h5 p-2">
+            <ul class="navbar-nav align-items-baseline">
+                <li class="nav-link"><a href="../Entidades/index.html">Entidades</a></li>
+                <li class="nav-link"><a href="../Processos/index.html">Processos</a></li>
+                <li class="nav-link"><a href="../AlteracoesEstatutos/index.html">Alterações de estatutos</a></li>
+                <li class="nav-link"><a href="../EleicoesCorposGerentes/index.html">Eleicoes dos corpos gerentes</a></li>
+                <li class="nav-link"><a href="../PK_IRCTs/index.html">IRCTs</a></li>
+                <li class="nav-link"><a href="../Outorgantes/index.html">Outorgantes</a></li>
+            </ul>
+        </nav>
 		{% block content %}
 		<table class="table table-striped">
 			<thead class="bg-primary text-white">
 				<tr>
 					<th>Chave</th>
 					<th>Valor</th>
+					<th>PK?</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -39,6 +50,7 @@
 				<tr>
 					<th>{{key}}</td>
 					<td>{{row[key]}}</td>
+					<td>{{"PK" if columns[loop.index0][5] > 0}}</td>
 				</tr>
 				{% endfor %}
 			</tbody>

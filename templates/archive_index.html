@@ -1,0 +1,10 @@
+{% extends "archive_base.html" %}
+{% block content %}
+    {% for row in rows %}
+        <div class="row">
+            <div class="col-12">
+                <p><a href="{{ row.filename }}.html">{{ row.filename }}</a></p>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}

@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS AlteracoesEstatutos(
   servico TEXT,
   FOREIGN KEY(codEntG, codEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt),
   FOREIGN KEY(tipo,especie,subEspecie,numero,ano,servico) REFERENCES Processos(tipo,especie,subEspecie,numero,ano,servico)
-  PRIMARY KEY(codEntG, codEntE, numAlt, numSeqAlt)
+  PRIMARY KEY(codEntG, codEntE, numAlt, numSeqAlt,tipo,especie,subEspecie,numero,ano,servico)
 );
 
 CREATE TRIGGER IF NOT EXISTS create_Processo_when_insert_AlteracoesEstatutos

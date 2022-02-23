@@ -1,0 +1,95 @@
+{% extends "archive_index.html" %}
+{% block content %}
+    <table class="table table-striped">
+        <thead class="bg-primary text-white">
+            <tr>
+                <th>Nome</th>
+                <th>Distrito</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <thead>
+            <tr>
+                <td><input type="text" name="nome" class="form-control w-100" placeholder="Pesquisar por nome ou acrónimo..."></td>
+                <td>
+                    <select name="estado" class="form-control">
+                        <option value="">Selecionar estado...</option>
+                        <option value="Ativa">Ativa</option>
+                        <option value="Cancelada">Cancelada</option>
+                    </select>
+                </td>
+                <td>
+                    <select name="distrito" class="form-control">
+                        <option value="">Selecionar distrito...</option>
+                        {% for distrito in ["AVEIRO","BEJA","BRAGA","BRAGANÇA","CASTELO BRANCO","COIMBRA","EVORA","FARO","GUARDA","LEIRIA","LISBOA","PORTALEGRE","PORTO","SANTARÉM","SETÚBAL","VIANA DO CASTELO","VILA REAL","VISEU"]%}
+                        <option value="{{ distrito }}">{{ distrito }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in cursor.execute("SELECT distritoDescricao, nomeEntidade, estadoEntidade, codEntG, codEntE, numAlt, sigla FROM Organizacoes").fetchall()|sort(attribute=1) %}
+            {% set id = "%d.%d.%d" % (row[3], row[4], row[5]) %}
+            {% set url = "%s.html" % id %}
+            <tr class="result" data-sigla="{{row[6]}}" data-id="{{id}}" data-nome="{{row[1]}}" data-estado="{{row[2]}}" data-distrito="{{row[0]}}">
+                <td><a href="{{ url }}">{{ row[1] }}</a></td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[0]|default('',True) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        let inNome = document.querySelector("input[name=nome]");
+        let inEstado = document.querySelector("select[name=estado]");
+        let inDistrito = document.querySelector("select[name=distrito]");
+
+        function search(){
+            var nome = inNome.value.toUpperCase().split(' ');
+            var estado = inEstado.value;
+            var distrito = inDistrito.value;
+            window.history.replaceState(null, null, '?' + new URLSearchParams({
+                nome: inNome.value,
+                estado: estado,
+                distrito: distrito
+            }).toString());
+
+            let rows = document.querySelectorAll('.result');
+            for( let row of rows ){
+                row.classList.remove('d-none');
+                let reg = new RegExp(`${nome.join('.*')}`, 'i');
+                if( nome && !reg.test(row.dataset.nome) && !reg.test(row.dataset.sigla) && !reg.test(row.dataset.id) ){
+                    row.classList.add('d-none');
+                }
+                if( estado && row.dataset.estado != estado ){
+                    row.classList.add('d-none');
+                }
+                let rd = new RegExp(`${distrito}$`)
+                if( !rd.test(row.dataset.distrito) ){
+                    row.classList.add('d-none');
+                }
+            }
+
+        }
+
+        new URLSearchParams(window.location.search).forEach((value, key) => {
+            if( key == 'nome' ){
+                inNome.value = value;
+            }
+            if( key == 'estado' ){
+                inEstado.value = value;
+            }
+            if( key == 'distrito' ){
+                inDistrito.value = value;
+            }
+            window.requestAnimationFrame(search)
+        });
+
+        inNome.addEventListener('change', search);
+        inNome.addEventListener('keyup', search);
+        inEstado.addEventListener('change', search);
+        inDistrito.addEventListener('change', search);
+        
+    </script>
+{% endblock %}

@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS Processos(
   PRIMARY KEY(tipo,especie,subEspecie,numero,ano,servico)
 );
 
+-- WHERE -- Filtrar os tipos de processos P.TIPO||'.'||P.ESPECIE||'.'||P.SUB_ESPECIE IN ('2.4.15' -- ELEIÇÃO DE CORPOS GERENTES DE ASS. SINDICAL ,'2.5.15' -- ELEIÇÃO DE CORPOS GERENTES DE ASS. PATRONAL --,'2.6.17' -- ELEIÇÃO DE COM. DE TRABALHADORES ,'2.4.13' -- CONSTITUIÇÃO DE ASS. SINDICAL ,'2.4.14' -- ALTERAÇÃO DE ESTATUTOS DE ASS. SINDICAL ,'2.4.18' -- EXTINÇÃO DE ASS. SINDICAL ,'2.4.85' -- ANULAÇÃO DE NORMAS DE ESTATUTOS OU DE DELIBERAÇOES ,'2.5.13' -- CONSTITUIÇÃO DE ASS. PATRONAL ,'2.5.14' -- ALTERAÇÃO DE ESTATUTOS DE ASS. PATRONAL ,'2.5.18' -- EXTINÇÃO DE ASS. PATRONAL ,'2.5.85' -- ANULAÇÃO DE NORMAS DE ESTATUTOS OU DE DELIBERAÇOES --,'2.6.14' -- ALT. ESTATUTOS C. TRAB. --,'2.6.16' -- CONSTITUIÇÃO E ESTATUTOS DE COM. TRABALHADORES --,'2.6.18' -- EXTINÇÃO DE COM. TRABALHADORES --,'2.6.85' -- ANULAÇÃO DE NORMAS DE ESTATUTOS OU DE DELIBER 
+
 CREATE TABLE IF NOT EXISTS EleicoesCorposGerentes(
   codEntG INTEGER,
   codEntE INTEGER,
@@ -65,7 +67,7 @@ CREATE TABLE IF NOT EXISTS EleicoesCorposGerentes(
   servico TEXT,
   FOREIGN KEY(codEntG, codEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt),
   FOREIGN KEY(tipo,especie,subEspecie,numero,ano,servico) REFERENCES Processos(tipo,especie,subEspecie,numero,ano,servico),
-  PRIMARY KEY(codEntG, codEntE, numAlt,tipo,especie,subEspecie,numero,ano,servico) --  we might be missing a field
+  PRIMARY KEY(codEntG, codEntE, numAlt,tipo,especie,subEspecie,numero,ano,servico) --  we might be missing a field numeroEleicao
 );
 
 CREATE TRIGGER IF NOT EXISTS create_Processo_when_insert_EleicaoCorpoGerentes
@@ -139,8 +141,8 @@ CREATE TABLE IF NOT EXISTS IRCTs(
   dist INTEGER,
   conc INTEGER,
   prov INTEGER,
-  codCAE TEXT,
-  revCAE TEXT,
+  codCAE TEXT, -- MULTIPLOS
+  revCAE TEXT, --RE
   FOREIGN KEY(numero, numeroSequencial, ano, tipoConvencaoCodigo) REFERENCES PK_IRCTs(numero, numeroSequencial, ano, tipoConvencaoCodigo)
   --PRIMARY KEY(numero,numeroSequencial,ano,tipoConvencaoCodigo,tipoConvencaoOrdem,naturezaCodigo,ambitoGeograficoCodeIRCT,dist,conc,codCAE,revCAE)
 );

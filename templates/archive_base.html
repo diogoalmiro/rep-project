@@ -50,7 +50,7 @@
 				<tr>
 					<th>{{key}}</td>
 					<td>{{row[key]}}</td>
-					<td>{{"PK" if columns[loop.index0][5] > 0}}</td>
+					<td>{{"PK" if columns[loop.index0]['pk'] > 0}}</td>
 				</tr>
 				{% endfor %}
 			</tbody>

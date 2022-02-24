@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS EleicoesCorposGerentes(
   servico TEXT,
   FOREIGN KEY(codEntG, codEntE, numAlt) REFERENCES Entidades(codEntG, codEntE, numAlt),
   FOREIGN KEY(tipo,especie,subEspecie,numero,ano,servico) REFERENCES Processos(tipo,especie,subEspecie,numero,ano,servico),
-  PRIMARY KEY(codEntG, codEntE, numAlt,tipo,especie,subEspecie,numero,ano,servico) --  we might be missing a field numeroEleicao
+  PRIMARY KEY(codEntG, codEntE, numAlt,numeroEleicao,tipo,especie,subEspecie,numero,ano,servico)
 );
 
 CREATE TRIGGER IF NOT EXISTS create_Processo_when_insert_EleicaoCorpoGerentes
@@ -77,7 +77,7 @@ CREATE TRIGGER IF NOT EXISTS create_Processo_when_insert_EleicaoCorpoGerentes
     INSERT INTO Processos(tipo,especie,subEspecie,numero,ano,controlo,servico,codAssunto,assunto,designacao,titulo)
     VALUES(
       NEW.tipo,NEW.especie,NEW.subEspecie,NEW.numero,NEW.ano,NEW.controlo,ifnull(NEW.servico,""),
-      120,"ELEIÇÃO DE CORPOS GERENTES","ELEIÇÃO DE CORPOS GERENTES DE ASS. " || CASE WHEN NEW.codEntG < 5 THEN "SINDICAL" ELSE "PATRONAL" END, "DEDUCED WHEN EleicaoCorpoGerentes INSERTED"); -- titulo e dataAberturaProcesso empty
+      120,"ELEIÇÃO DE CORPOS GERENTES","ELEIÇÃO DE CORPOS GERENTES DE ASS. " || CASE WHEN NEW.codEntG < 5 THEN "SINDICAL" ELSE "PATRONAL" END, "AVISO: Este processo foi deduzido ao se inserir uma EleicaoCorpoGerentes, poderá haver algum erro na tabela original."); -- titulo e dataAberturaProcesso empty
   END;
 
 CREATE TABLE IF NOT EXISTS AlteracoesEstatutos(
@@ -108,7 +108,7 @@ CREATE TRIGGER IF NOT EXISTS create_Processo_when_insert_AlteracoesEstatutos
     INSERT INTO Processos(tipo,especie,subEspecie,numero,ano,controlo,servico,codAssunto,assunto,designacao,titulo)
     VALUES(
       NEW.tipo,NEW.especie,NEW.subEspecie,NEW.numero,NEW.ano,NEW.controlo,ifnull(NEW.servico,""),
-      123,"ALTERAÇÃO DE ESTATUTOS","ALTERAÇÃO DE ESTATUTOS DE ASS. " || CASE WHEN NEW.codEntG < 5 THEN "SINDICAL" ELSE "PATRONAL" END, "DEDUCED WHEN AltearcoesEstatutos INSERTED"); -- titulo e dataAberturaProcesso empty
+      123,"ALTERAÇÃO DE ESTATUTOS","ALTERAÇÃO DE ESTATUTOS DE ASS. " || CASE WHEN NEW.codEntG < 5 THEN "SINDICAL" ELSE "PATRONAL" END, "AVISO: Este processo foi deduzido ao se inserir uma AltearcoesEstatutos, poderá haver algum erro na tabela original."); -- titulo e dataAberturaProcesso empty
   END;
 
 CREATE TABLE IF NOT EXISTS PK_IRCTs(
@@ -141,10 +141,9 @@ CREATE TABLE IF NOT EXISTS IRCTs(
   dist INTEGER,
   conc INTEGER,
   prov INTEGER,
-  codCAE TEXT, -- MULTIPLOS
-  revCAE TEXT, --RE
+  codCAE TEXT, -- MULTIPLOS VALORES ASSOCIADOS AO CODIGO CAE
+  revCAE TEXT, --
   FOREIGN KEY(numero, numeroSequencial, ano, tipoConvencaoCodigo) REFERENCES PK_IRCTs(numero, numeroSequencial, ano, tipoConvencaoCodigo)
-  --PRIMARY KEY(numero,numeroSequencial,ano,tipoConvencaoCodigo,tipoConvencaoOrdem,naturezaCodigo,ambitoGeograficoCodeIRCT,dist,conc,codCAE,revCAE)
 );
 
 CREATE TRIGGER IF NOT EXISTS create_pk_IRCTs_when_insert_IRCTs

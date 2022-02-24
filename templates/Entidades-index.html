@@ -1,15 +1,19 @@
 {% extends "archive_index.html" %}
 {% block content %}
-    <table class="table table-striped">
+    <table class="table">
         <thead class="bg-primary text-white">
             <tr>
+                <th></th>
+                <th>Tipo</th>
                 <th>Nome</th>
+                <th>Acrónimo</th>
                 <th>Distrito</th>
                 <th>Estado</th>
             </tr>
         </thead>
-        <thead>
+        <thead id="search-bar" class="">
             <tr>
+                <td><input type="checkbox" id="select-all"></td>
                 <td><input type="text" name="nome" class="form-control w-100" placeholder="Pesquisar por nome ou acrónimo..."></td>
                 <td>
                     <select name="estado" class="form-control">
@@ -29,14 +33,17 @@
             </tr>
         </thead>
         <tbody>
-            {% for row in cursor.execute("SELECT distritoDescricao, nomeEntidade, estadoEntidade, codEntG, codEntE, numAlt, sigla FROM Organizacoes").fetchall()|sort(attribute=1) %}
-            {% set id = "%d.%d.%d" % (row[3], row[4], row[5]) %}
-            {% set url = "%s.html" % id %}
-            <tr class="result" data-sigla="{{row[6]}}" data-id="{{id}}" data-nome="{{row[1]}}" data-estado="{{row[2]}}" data-distrito="{{row[0]}}">
-                <td><a href="{{ url }}">{{ row[1] }}</a></td>
-                <td>{{ row[2] }}</td>
-                <td>{{ row[0]|default('',True) }}</td>
-            </tr>
+            {% for row in fetchall("SELECT distritoDescricao, nomeEntidade, estadoEntidade, codEntG, codEntE, numAlt, sigla, Tipo, sigla FROM Organizacoes")|sort(attribute=1) %}
+                {% set id = "%d.%d.%d" % (row[3], row[4], row[5]) %}
+                {% set url = "%s.html" % id %}
+                <tr class="result" data-tipo="{{row['Tipo']}}" data-sigla="{{row['sigla']}}" data-sigla="{{row[6]}}" data-id="{{id}}" data-nome="{{row[1]}}" data-estado="{{row[2]}}" data-distrito="{{row[0]}}">
+                    <td><input type="checkbox" name="entity" value="{{ id }}"></td>
+                    <td>{{ row['Tipo'] }}</td>
+                    <td><a href="{{ url }}">{{ row[1] }}</a></td>
+                    <td>{{ row['sigla'] }}</td>
+                    <td>{{ row['distritoDescricao']|default('',True) }}</td>
+                    <td>{{ row[2] }}</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
@@ -45,20 +52,16 @@
         let inEstado = document.querySelector("select[name=estado]");
         let inDistrito = document.querySelector("select[name=distrito]");
 
+        let timeout = null;
         function search(){
             var nome = inNome.value.toUpperCase().split(' ');
             var estado = inEstado.value;
             var distrito = inDistrito.value;
-            window.history.replaceState(null, null, '?' + new URLSearchParams({
-                nome: inNome.value,
-                estado: estado,
-                distrito: distrito
-            }).toString());
-
+            
             let rows = document.querySelectorAll('.result');
             for( let row of rows ){
                 row.classList.remove('d-none');
-                let reg = new RegExp(`${nome.join('.*')}`, 'i');
+                let reg = new RegExp(nome.map(o => `\\b.*${o}.*\\b`).join('.*'), 'i');
                 if( nome && !reg.test(row.dataset.nome) && !reg.test(row.dataset.sigla) && !reg.test(row.dataset.id) ){
                     row.classList.add('d-none');
                 }
@@ -71,7 +74,18 @@
                 }
             }
 
+            if( timeout ){
+                clearTimeout(timeout);
+            }
+            timeout = setTimeout(() => {
+                window.history.replaceState(null, null, '?' + new URLSearchParams({
+                    nome: inNome.value,
+                    estado: estado,
+                    distrito: distrito
+                }).toString());  
+            }, 200)
         }
+
 
         new URLSearchParams(window.location.search).forEach((value, key) => {
             if( key == 'nome' ){

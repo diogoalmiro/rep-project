@@ -5,11 +5,24 @@ import sqlite3
 import datetime
 from functools import partial
 
-def query(cursor, sqlquery, *args):
+def query_all(cursor, sqlquery, *args):
     cursor.execute(sqlquery, args)
     description = cursor.description
-    results = cursor.fetchall()
-    return [dict(zip([col[0] for col in description], row)) for row in results]
+    tmp = cursor.fetchall()
+    result_set = [dict(zip([col[0] for col in description], row)) for row in tmp]
+    for i, row in enumerate(tmp):
+        result_set[i].update(dict(enumerate(row)))
+    return result_set
+
+def query_one(cursor, sqlquery, *args):
+    cursor.execute(sqlquery, args)
+    description = cursor.description
+    tmp = cursor.fetchone()
+    if tmp is None:
+        return None
+    result = dict(zip([col[0] for col in description], tmp))
+    result.update(dict(enumerate(tmp)))
+    return result
 
 def main():
     data_path = Path("static/data/")
@@ -17,21 +30,22 @@ def main():
     
     connection = sqlite3.connect('rep-database.db')
     cursor = connection.cursor()
-    fetchall = partial(query, cursor)
-    env.globals.update(fetchall=fetchall)
+    
+    env.globals.update(fetchall=partial(query_all, cursor))
+    env.globals.update(fetchone=partial(query_one, cursor))
     
     for table in ["Entidades", "Processos", "EleicoesCorposGerentes", "AlteracoesEstatutos", "PK_IRCTs","Outorgantes"]:
 
         data_table_path = data_path/table
         data_table_path.mkdir(parents=True, exist_ok=True)
         
-        columns = fetchall(f"PRAGMA table_info({table})")
+        columns = query_all(cursor, f"SELECT name, pk FROM pragma_table_info('{table}') ORDER BY pk")
         pk = [row['name'] for row in columns if row['pk'] > 0]
         
-        results = fetchall(f"SELECT * FROM {table}")
+        results = query_all(cursor, f"SELECT * FROM {table}")
 
         for row in results:
-            name = ".".join([str(row[col]) for col in pk])
+            name = ".".join(str(row[name]) for name in pk)
             env.get_template(f"{table}.html").stream(row=row, cursor=cursor, name=name, table=table, columns=columns).dump((data_table_path / f"{name}.html").open('w'))
             row['filename'] = name
         

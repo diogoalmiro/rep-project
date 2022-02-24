@@ -1,1 +1,28 @@
 {% extends "archive_base.html" %}
+{% block content %}
+
+{% set id = "%s.%s.%s.%s" % (row['numero'], row['numeroSequencial'], row['ano'], row['tipoConvencaoCodigo']) %}
+{% set row = fetchone("SELECT tipoConvencaoDescr, tipoConvencaoDescrLong, tipoConvencaoOrdem, naturezaCodigo, naturezaDescricao, nomeCC, numBTE, dataBTE DATE, serieBTE, ambGeg, dataEfeitos DATE, area, dist, conc, prov FROM IRCTs WHERE numero = ? AND numeroSequencial = ? and ano = ? and tipoConvencaoCodigo = ?", row['numero'], row['numeroSequencial'], row['ano'], row['tipoConvencaoCodigo']) %}
+
+<div class="row">
+    <div class="col-12 col-md-6">
+        <table class="table table-striped">
+            <thead class="bg-primary text-white">
+                <th>IRCT</th>
+                <td>{{ id }}</td>
+            </thead>
+            <tbody>
+                {% for key in row.keys() %}
+                    {% if type(key) not is int %}
+                        <tr>
+                            <th>{{ key }}</th>
+                            <td>{{ row[key] }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

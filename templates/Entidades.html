@@ -6,7 +6,7 @@
             <thead class="bg-primary text-white">
                 <tr>
                     <th>Tipo</th>
-                    <th>Entidade {{ 'sindical' if row['codEntG'] < 5 else 'de empregadores'}}</th>
+                    <th>{{ fetchone("SELECT Tipo FROM Organizacoes WHERE codEntG = ? LIMIT 1",row["codEntG"])['Tipo'] }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -47,20 +47,20 @@
                 </tr>
             </thead>
             <tbody>
-                {% for srow in cursor.execute("SELECT codEntG, codEntE, numAlt FROM Entidades WHERE codEntG = ? AND codEntE = ? ORDER BY numAlt",(row["codEntG"],row["codEntE"])).fetchall() %}
+                {% for srow in fetchall("SELECT codEntG, codEntE, numAlt FROM Entidades WHERE codEntG = ? AND codEntE = ? ORDER BY numAlt",row["codEntG"],row["codEntE"]) %}
                 <tr>
                     <td>
-                        {% if srow[2] != row['numAlt'] %}
-                        <a href="{{srow[0]}}.{{srow[1]}}.{{srow[2]}}.html">{{srow[0]}}.{{srow[1]}}.{{srow[2]}}</a>
+                        {% if srow['numAlt'] != row['numAlt'] %}
+                        <a href="{{srow['codEntG']}}.{{srow['codEntE']}}.{{srow['numAlt']}}.html">{{srow['codEntG']}}.{{srow['codEntE']}}.{{srow['numAlt']}}</a>
                         {% else %}
-                        <span>{{srow[0]}}.{{srow[1]}}.{{srow[2]}}</span>
+                        <span>{{srow['codEntG']}}.{{srow['codEntE']}}.{{srow['numAlt']}}</span>
                         {% endif %}
                     </td>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    <div class="col-12">
+    <div class="col-12 col-md-4">
         <table class="table table-striped">
             <thead class="bg-primary text-white">
                 <tr>
@@ -68,14 +68,58 @@
                 </tr>
             </thead>
             <tbody>
-                {% for srow in cursor.execute("SELECT codEntG, codEntE, numAlt,tipo,especie,subEspecie,numero,ano,servico,dataEleicao FROM EleicoesCorposGerentes WHERE codEntG = ? AND codEntE = ? AND numAlt = ?",(row["codEntG"],row["codEntE"],row["numAlt"])).fetchall() %}
+                {% for srow in fetchall("SELECT codEntG, codEntE, numAlt,numeroEleicao,tipo,especie,subEspecie,numero,ano,servico,dataEleicao FROM EleicoesCorposGerentes WHERE codEntG = ? AND codEntE = ? AND numAlt = ?",row["codEntG"],row["codEntE"],row["numAlt"]) %}
                 <tr>
                     <td>
-                        {% set id = "%s.%s.%s.%s.%s.%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3], srow[4], srow[5], srow[6], srow[7], srow[8] ) %}
+                        {% set id = "%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3], srow[4], srow[5], srow[6], srow[7], srow[8], srow[9] ) %}
                         {% set url = "../EleicoesCorposGerentes/%s.html" % id %}
                         <a href="{{url}}">
-                            {{ srow[9] }}
+                            {{ srow['dataEleicao'] }}
                         </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+    <div class="col-12 col-md-4">
+        <table class="table table-striped">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th>Alterações estatutos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for srow in fetchall("SELECT codEntG, codEntE, numAlt, numSeqAlt,tipo,especie,subEspecie,numero,ano,servico,dataBTE FROM AlteracoesEstatutos WHERE codEntG = ? AND codEntE = ? AND numAlt = ?",row["codEntG"],row["codEntE"],row["numAlt"]) %}
+                <tr>
+                    <td>
+                        {% set id = "%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3], srow[4], srow[5], srow[6], srow[7], srow[8], srow[9] ) %}
+                        {% set url = "../AlteracoesEstatutos/%s.html" % id %}
+                        <a href="{{url}}">
+                            {{ srow['dataBTE'] }}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+    <div class="col-12 col-md-4">
+        <table class="table table-striped">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th>IRCTs</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for srow in fetchall("SELECT numero, numSeq, ano, tipoConv FROM Outorgantes WHERE CodEntG = ? AND CondEntE = ? AND numAlt = ?",row["codEntG"],row["codEntE"],row["numAlt"]) %}
+                <tr>
+                    <td>
+                        {% set id = "%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3] ) %}
+                        {% set url = "../PK_IRCTs/%s.html" % id %}
+                        <a href="{{url}}">{{ id }}</a>
                     </td>
                 </tr>
                 {% endfor %}

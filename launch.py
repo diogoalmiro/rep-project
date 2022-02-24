@@ -231,51 +231,52 @@ def export():
             download_name='data-export_%s.xlsx' % datetime.now().strftime("%Y-%m-%d-%H_%M_%S"),
             as_attachment=True)
 
-@app.route("/org_sindical_by_year", methods=['GET'])
-def org_sindical_by_year():
-    connection = sqlite3.connect(DATABASE_NAME)
+@app.route("/orgs_by_year", methods=['GET'])
+def orgs_by_year():
     results = []
+    seen = set()
+    tmp_entidades = rep_database.getResponse("entidades", 0)
+    entidades = []
+    for entidade in tmp_entidades:
+        id = f"{entidade['codEntG']}.{entidade['codEntE']}"
+        if id not in seen:
+            entidades.append(entidade)
+            seen.add(id)
     for ano in range(1996, date.today().year + 1):
-        cursor = connection.execute("""
-            SELECT Tipo, COUNT() As Count 
-            FROM Org_Sindical 
-            WHERE
-                :ano >= cast(strftime("%Y", Data_Primeira_Actividade) as number) 
-                AND (Activa = 1 OR :ano <= cast(strftime("%Y", Data_Ultima_actividade) as number) )
-            GROUP BY Tipo""", {"ano": ano})
         curr_obj = {
             'ano': ano,
             'CONFEDERAÇÃO SINDICAL': 0,
             'FEDERAÇÃO SINDICAL': 0,
             'SINDICATO': 0,
-            'UNIÃO SINDICAL': 0
+            'UNIÃO SINDICAL': 0,
+            'CONFEDERAÇÃO DE EMPREGADORES': 0,
+            'FEDERAÇÃO DE EMPREGADORES': 0,
+            'ASSOCIAÇÃO DE EMPREGADORES': 0,
+            'UNIÃO DE EMPREGADORES': 0
         }
-        for row in cursor.fetchall():
-            curr_obj[row[0]] = row[1]
-        results.append(curr_obj)
-    return jsonify(results)
-
-@app.route("/org_patronal_by_year", methods=['GET'])
-def org_patronal_by_year():
-    connection = sqlite3.connect(DATABASE_NAME)
-    results = []
-    for ano in range(1996, date.today().year + 1):
-        cursor = connection.execute("""
-            SELECT Tipo, COUNT() As Count 
-            FROM Org_Patronal 
-            WHERE
-                :ano >= cast(strftime("%Y", Data_Primeira_Actividade) as number) 
-                AND (Activa = 1 OR :ano <= cast(strftime("%Y", Data_Ultima_actividade) as number) )
-            GROUP BY Tipo""", {"ano": ano})
-        curr_obj = {
-            'ano': ano,
-            'CONFEDERAÇÃO PATRONAL': 0,
-            'FEDERAÇÃO PATRONAL': 0,
-            'ASSOCIAÇÂO PATRONAL': 0,
-            'UNIÃO PATRONAL': 0
-        }
-        for row in cursor.fetchall():
-            curr_obj[row[0]] = row[1]
+        for entidade in entidades:
+            start = date.fromisoformat(entidade['dataBteConstituicao']).year
+            if 'dataBteExtincao' in entidade:
+                end = date.fromisoformat(entidade['dataBteExtincao']).year
+            else:
+                end = date.today().year+1
+            if start <= ano < end:
+                if entidade['codEntG'] == 1:
+                    curr_obj['SINDICATO'] += 1
+                elif entidade['codEntG'] == 2:
+                    curr_obj['FEDERAÇÃO SINDICAL'] += 1
+                elif entidade['codEntG'] == 3:
+                    curr_obj['UNIÃO SINDICAL'] += 1
+                elif entidade['codEntG'] == 4:
+                    curr_obj['CONFEDERAÇÃO SINDICAL'] += 1
+                if entidade['codEntG'] == 5:
+                    curr_obj['ASSOCIAÇÃO DE EMPREGADORES'] += 1
+                elif entidade['codEntG'] == 6:
+                    curr_obj['FEDERAÇÃO DE EMPREGADORES'] += 1
+                elif entidade['codEntG'] == 7:
+                    curr_obj['UNIÃO DE EMPREGADORES'] += 1
+                elif entidade['codEntG'] == 8:
+                    curr_obj['CONFEDERAÇÃO DE EMPREGADORES'] += 1
         results.append(curr_obj)
     return jsonify(results)
 

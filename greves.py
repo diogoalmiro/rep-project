@@ -67,7 +67,7 @@ def get_ID_by_name_or_acronimo(name, connection):
     return cursor.fetchone()
 
 def all_formated_ids(row: pd.Series):
-    for id in re.finditer("\d+\.\d+\.\d+", str(row.get("código entidade ativa",""))):
+    for id in re.finditer("\d+\.\d+(\.\d+)?", str(row.get("código entidade ativa",""))):
         yield id.group(0)
     for id in re.finditer("\d+\.\d+\.\d+", str(row.get("código entidade sindical",""))):
         yield id.group(0)

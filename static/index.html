@@ -57,8 +57,12 @@
 				Os dois gráficos seguintes resumem os dados atuais na DOT:
 			</p>
 			<div class="row">
-				<canvas class="col-12 col-md-6" id="org_sindical_year"></canvas>
-				<canvas class="col-12 col-md-6" id="org_patronal_year"></canvas>
+				<div class="col-12 col-xl-6">
+					<canvas id="org_sindical_year"></canvas>
+				</div>
+				<div class="col-12 col-xl-6">
+					<canvas id="org_patronal_year"></canvas>
+				</div>
 			</div>
 		</div>
 		<div class="text-justify">
@@ -110,7 +114,20 @@
 				"UNIÃO DE EMPREGADORES": "#0000FF"
 			}
 
-			fetch("/org_sindical_by_year").then(r => r.json()).then(data => new Chart(document.getElementById("org_sindical_year"), {
+			fetch("/orgs_by_year").then(r => r.json()).then(data => {
+				let min = 0;
+				let max = data.reduce( 
+					(acc, o) => 
+						Math.max(
+							acc, 
+							Math.max(
+								Object.keys(sublabelSindical).reduce((sacc, k) => o[k] + sacc,0),
+								Object.keys(sublabelPatronal).reduce((sacc, k) => o[k] + sacc,0)
+							)
+						), 0)
+
+
+				new Chart(document.getElementById("org_sindical_year"), {
 					type: 'bar',
 					data: {
 						labels: labels,
@@ -132,11 +149,11 @@
 								},
 						scales: {
 							xAxes: [{ stacked: true, gridLines: { display: false } }],
-							yAxes: [{ stacked: true, gridLines: { display: false }  }]
+							yAxes: [{ stacked: true, gridLines: { display: false }, ticks: {  suggestedMax: max } }]
 						}
 					}
-				}))
-			fetch("/org_patronal_by_year").then(r => r.json()).then(data => new Chart(document.getElementById("org_patronal_year"), {
+				});
+				new Chart(document.getElementById("org_patronal_year"), {
 					type: 'bar',
 					data: {
 						labels: labels,
@@ -157,11 +174,15 @@
 									}
 								},
 						scales: {
-							xAxes: [{ stacked: true, gridLines: { display: false }  }],
-							yAxes: [{ stacked: true, gridLines: { display: false }  }]
+							xAxes: [{ stacked: true, gridLines: { display: false } }],
+							yAxes: [{ stacked: true, gridLines: { display: false }, ticks: {  suggestedMax: max } }]
 						}
 					}
-				}))
+				});
+				chart.options.scales.yAxes[0].ticks.min = newMin;
+chart.options.scales.yAxes[0].ticks.max = newMax;
+chart.update();
+			});
 
 		</script>
 	</div>

@@ -6,6 +6,7 @@ import sys
 import threading
 from datetime import date, datetime
 from io import BytesIO
+from unittest import result
 import click
 
 import pandas as pd
@@ -233,16 +234,12 @@ def export():
 
 @app.route("/orgs_by_year", methods=['GET'])
 def orgs_by_year():
+    connection = sqlite3.connect(DATABASE_NAME)
+    selectstm = """SELECT Tipo, dataBteConstituicao, dataBteExtincao FROM Organizacoes"""
+    rows = connection.execute(selectstm).fetchall()
     results = []
-    seen = set()
-    tmp_entidades = rep_database.getResponse("entidades", 0)
-    entidades = []
-    for entidade in tmp_entidades:
-        id = f"{entidade['codEntG']}.{entidade['codEntE']}"
-        if id not in seen:
-            entidades.append(entidade)
-            seen.add(id)
     for ano in range(1996, date.today().year + 1):
+    
         curr_obj = {
             'ano': ano,
             'CONFEDERAÇÃO SINDICAL': 0,
@@ -254,29 +251,15 @@ def orgs_by_year():
             'ASSOCIAÇÃO DE EMPREGADORES': 0,
             'UNIÃO DE EMPREGADORES': 0
         }
-        for entidade in entidades:
-            start = date.fromisoformat(entidade['dataBteConstituicao']).year
-            if 'dataBteExtincao' in entidade:
-                end = date.fromisoformat(entidade['dataBteExtincao']).year
+    
+        for entidade in rows:
+            start = date.fromisoformat(entidade[1]).year
+            if entidade[2] is not None:
+                end = date.fromisoformat(entidade[2]).year
             else:
                 end = date.today().year+1
             if start <= ano < end:
-                if entidade['codEntG'] == 1:
-                    curr_obj['SINDICATO'] += 1
-                elif entidade['codEntG'] == 2:
-                    curr_obj['FEDERAÇÃO SINDICAL'] += 1
-                elif entidade['codEntG'] == 3:
-                    curr_obj['UNIÃO SINDICAL'] += 1
-                elif entidade['codEntG'] == 4:
-                    curr_obj['CONFEDERAÇÃO SINDICAL'] += 1
-                if entidade['codEntG'] == 5:
-                    curr_obj['ASSOCIAÇÃO DE EMPREGADORES'] += 1
-                elif entidade['codEntG'] == 6:
-                    curr_obj['FEDERAÇÃO DE EMPREGADORES'] += 1
-                elif entidade['codEntG'] == 7:
-                    curr_obj['UNIÃO DE EMPREGADORES'] += 1
-                elif entidade['codEntG'] == 8:
-                    curr_obj['CONFEDERAÇÃO DE EMPREGADORES'] += 1
+                curr_obj[entidade[0]] += 1
         results.append(curr_obj)
     return jsonify(results)
 

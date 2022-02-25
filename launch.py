@@ -41,7 +41,7 @@ def regular_update():
     print("Updating database...")
     try:
         updating = True
-        rep_database.repDatabase()
+        rep_database.main()
         updating = False
         # Sleep for one day
         threading.Timer(86400, regular_update).start()
@@ -278,7 +278,7 @@ def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="80
         # Create the database
         print("Creating database for the first time. This operation may take a while...")
         try:
-            rep_database.repDatabase()
+            rep_database.main()
             print("Database created successfully.")
         except Exception as e:
             print("Error creating database:\n ", e)

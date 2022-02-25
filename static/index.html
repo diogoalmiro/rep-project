@@ -7,11 +7,10 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex">
-	<link rel="icon" href="/static/favicon.ico"/>
-	<link rel=stylesheet type=text/css href="/static/css/bootstrap.min.css" />
-	<link rel=stylesheet type=text/css href="/static/css/dropdown.css" />
-	<link rel=stylesheet type=text/css href="/static/css/tables.css" />
-    <script src="/static/js/Chart.min.js"></script>
+	<link rel="icon" href="/dot/static/favicon.ico"/>
+	<link rel=stylesheet type=text/css href="/dot/static/css/bootstrap.min.css" />
+	<link rel=stylesheet type=text/css href="/dot/static/css/dropdown.css" />
+    <script src="/dot/static/js/Chart.min.js"></script>
 </head>
 
 <body>
@@ -19,16 +18,16 @@
 		<nav class="navbar navbar-light navbar-expand h4 p-3">
 			<ul class="navbar-nav align-items-baseline">
 				<li class="nav-item active pr-2 mr-5">
-					<a class="nav-link" href="/"><h2>DOT</h2></a>
+					<a class="nav-link" href="/dot/"><h2>DOT</h2></a>
 				</li>
 				<li class="nav-item active">
-					<a class="nav-link mx-2" href="/">Apresentação</a>
+					<a class="nav-link mx-2" href="/dot/">Apresentação</a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link mx-2" href="/dashboard-search/">Pesquisa</a>
+					<a class="nav-link mx-2" href="/dot/dashboard-search/">Pesquisa</a>
 				</li>
 				<!--<li class="nav-item">
-					<a class="nav-link mx-2" href="/static/data/index.html">Arquivo</a>
+					<a class="nav-link mx-2" href="/dot/static/data/index.html">Arquivo</a>
 				</li>-->
 			</ul>
 		</nav>
@@ -114,7 +113,7 @@
 				"UNIÃO DE EMPREGADORES": "#0000FF"
 			}
 
-			fetch("/orgs_by_year").then(r => r.json()).then(data => {
+			fetch("/dot/orgs_by_year").then(r => r.json()).then(data => {
 				let min = 0;
 				let max = data.reduce( 
 					(acc, o) => 

@@ -6,11 +6,10 @@ import sys
 import threading
 from datetime import date, datetime
 from io import BytesIO
-from unittest import result
 import click
 
 import pandas as pd
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
 
 import rep_database
 
@@ -53,10 +52,12 @@ def regular_update():
 
 # Create a new flask web server
 app = Flask(__name__)
+app.config["APPLICATION_ROOT"] = "/dot/"
+
 
 @app.route("/")
 def index():
-    return send_file("static/index.html")
+    return redirect("/index.html")
 
 ROWS_PER_PAGE = 50
 
@@ -136,9 +137,9 @@ def export():
 
     IDS = []
 
-    col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Nome da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Setor", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"]
+    col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"]
     rows = connection.execute("""
-        SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), ifnull(Sector, ""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
+        SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
         FROM Org_Sindical
         WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
@@ -151,7 +152,7 @@ def export():
     IDS.extend(list(map(lambda x: x[0], rows)))
 
     rows = connection.execute("""
-        SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), ifnull(Sector, ""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
+        SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
         FROM Org_Patronal
         WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
@@ -163,7 +164,7 @@ def export():
     pd.DataFrame(list(rows), columns=col_names).to_excel(excel_writer, sheet_name="Organizações de Empregadores", index=False)
     IDS.extend(list(map(lambda x: x[0], rows)))
     
-    col_names = [ "Código Identificador da Organização", "Nome da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
+    col_names = [ "Código Identificador da Organização", "Denominação da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
     rows = connection.execute("""
             SELECT DISTINCT ID_Organizacao_Sindical, Org_Sindical.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
                        FROM Actos_Negociacao_Colectiva
@@ -177,9 +178,9 @@ def export():
                       WHERE Org_Patronal.ID=ID_Organizacao_Patronal
                         AND ID_Organizacao_Patronal IS NOT NULL 
     """, sqlformat).fetchall()
-    pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Negociação Coletiva", index=False)
+    pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
 
-    col_names = ["_id_greve", "Código Identificador da Organização", "Nome da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"]
+    col_names = ["_id_greve", "Código Identificador da Organização", "Denominação da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"]
     rows = connection.execute("""
             SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Sindical.ID, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
               FROM Avisos_Greve_New
@@ -196,9 +197,9 @@ def export():
                AND Avisos_Greve_Participante_Patronal.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
           ORDER BY Avisos_Greve_New.ID_Aviso_Greve
     """, sqlformat).fetchall()
-    pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Avisos de Greve", index=False)
+    pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
 
-    col_names = ["Código Identificador da Organização", "Nome da Organização", "Ano", "Número", "Série", "URL para BTE"]
+    col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
     rows = connection.execute("""
             SELECT ID_Organizacao_Sindical, Org_Sindical.Nome, Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Sindical, Org_Sindical
@@ -210,9 +211,9 @@ def export():
              WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal = Org_Patronal.ID 
                AND Mudanca_Estatuto = TRUE
     """, sqlformat).fetchall()
-    pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Mudanças de Estatuto", index=False)
+    pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Estatutos", index=False)
 
-    col_names = ["Código Identificador da Organização", "Nome da Organização", "Ano", "Número", "Série", "URL para BTE"]
+    col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
     rows = connection.execute("""
             SELECT ID_Organizacao_Sindical, Org_Sindical.Nome, Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Sindical, Org_Sindical
@@ -262,6 +263,10 @@ def orgs_by_year():
                 curr_obj[entidade[0]] += 1
         results.append(curr_obj)
     return jsonify(results)
+
+@app.route("/<path:path>", methods=['GET'])
+def static_file(path):
+    return send_from_directory('static', path)
 
 @click.command()
 @click.option('--host', help='webapp server host.', show_default=True, default="127.0.0.1")

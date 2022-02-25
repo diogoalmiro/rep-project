@@ -9,7 +9,7 @@ from io import BytesIO
 import click
 
 import pandas as pd
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
 
 import rep_database
 
@@ -52,10 +52,12 @@ def regular_update():
 
 # Create a new flask web server
 app = Flask(__name__)
+app.config["APPLICATION_ROOT"] = "/dot/"
+
 
 @app.route("/")
 def index():
-    return send_file("static/index.html")
+    return redirect("/index.html")
 
 ROWS_PER_PAGE = 50
 
@@ -279,6 +281,10 @@ def org_by_year():
                     curr_obj['CONFEDERAÇÃO DE EMPREGADORES'] += 1
         results.append(curr_obj)
     return jsonify(results)
+
+@app.route("/<path:path>", methods=['GET'])
+def static_file(path):
+    return send_from_directory('static', path)
 
 @click.command()
 @click.option('--host', help='webapp server host.', show_default=True, default="127.0.0.1")

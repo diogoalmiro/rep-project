@@ -7,7 +7,6 @@ import os
 import re
 from datetime import datetime
 import greves
-import archive
 
 #com autenticacao
 def getResponse(tabela, ano):
@@ -1496,7 +1495,6 @@ def repDatabase():
 	connection.close()
 
 	greves.main()
-	archive.main()
 
 	return stats
 

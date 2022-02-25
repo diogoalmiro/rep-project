@@ -60,7 +60,7 @@
             </tbody>
         </table>
     </div>
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-3">
         <table class="table table-striped">
             <thead class="bg-primary text-white">
                 <tr>
@@ -83,7 +83,7 @@
             </tbody>
         </table>
     </div>
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-3">
         <table class="table table-striped">
             <thead class="bg-primary text-white">
                 <tr>
@@ -106,7 +106,7 @@
             </tbody>
         </table>
     </div>
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-3">
         <table class="table table-striped">
             <thead class="bg-primary text-white">
                 <tr>
@@ -119,6 +119,27 @@
                     <td>
                         {% set id = "%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3] ) %}
                         {% set url = "../PK_IRCTs/%s.html" % id %}
+                        <a href="{{url}}">{{ id }}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+    <div class="col-12 col-md-3">
+        <table class="table table-striped">
+            <thead class="bg-primary text-white">
+                <tr>
+                    <th>Avisos Greve</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for srow in fetchall("SELECT _id_greve FROM Avisos_Greve_Entidades WHERE codEntG = ? AND codEntE = ? AND numAlt = ?",row["codEntG"],row["codEntE"],row["numAlt"]) %}
+                <tr>
+                    <td>
+                        {% set id = "%s" % srow[0] %}
+                        {% set url = "../Avisos_Greve/%s.html" % id %}
                         <a href="{{url}}">{{ id }}</a>
                     </td>
                 </tr>

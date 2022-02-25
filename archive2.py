@@ -4,6 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 import sqlite3
 import datetime
 from functools import partial
+import json
 
 def query_all(cursor, sqlquery, *args):
     cursor.execute(sqlquery, args)
@@ -24,6 +25,9 @@ def query_one(cursor, sqlquery, *args):
     result.update(dict(enumerate(tmp)))
     return result
 
+def to_dict(str):
+    return json.loads(str)
+
 def main():
     data_path = Path("static/data/")
     env = Environment(loader=FileSystemLoader("templates"))
@@ -33,8 +37,9 @@ def main():
     
     env.globals.update(fetchall=partial(query_all, cursor))
     env.globals.update(fetchone=partial(query_one, cursor))
+    env.filters.update(to_dict=to_dict)
     
-    for table in ["Entidades", "Processos", "EleicoesCorposGerentes", "AlteracoesEstatutos", "PK_IRCTs","Outorgantes"]:
+    for table in ["Entidades", "Processos", "EleicoesCorposGerentes", "AlteracoesEstatutos", "PK_IRCTs","Outorgantes","Avisos_Greve"]:
 
         data_table_path = data_path/table
         data_table_path.mkdir(parents=True, exist_ok=True)

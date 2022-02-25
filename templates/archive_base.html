@@ -34,6 +34,7 @@
                 <li class="nav-link"><a href="../EleicoesCorposGerentes/index.html">Eleicoes dos corpos gerentes</a></li>
                 <li class="nav-link"><a href="../PK_IRCTs/index.html">IRCTs</a></li>
                 <li class="nav-link"><a href="../Outorgantes/index.html">Outorgantes</a></li>
+                <li class="nav-link"><a href="../Avisos_Greve/index.html">Avisos Greve</a></li>
             </ul>
         </nav>
 		{% block content %}
@@ -46,10 +47,13 @@
 			</thead>
 			<tbody>
 				{% for key in row.keys() %}
-				<tr>
-					<th>{{key}}</td>
-					<td>{{row[key]}}</td>
-				</tr>
+
+					{% if key|int(-1) == -1 %}
+					<tr>
+						<th>{{key}}</td>
+						<td>{{row[key]}}</td>
+					</tr>
+					{% endif %}
 				{% endfor %}
 			</tbody>
 		</table>

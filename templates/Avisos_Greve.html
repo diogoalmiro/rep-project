@@ -1,0 +1,57 @@
+{% extends "archive_base.html" %}
+{% block content %}
+
+{% set id = "%s" % row['_id_greve'] %}
+{% set results = fetchall("SELECT codEntG, codEntE, numAlt FROM Avisos_Greve_Entidades WHERE _id_greve = ?", id) %}
+
+<div class="row">
+    <div class="col-12">
+        <table class="table table-striped">
+            <thead class="bg-primary text-white">
+                <th>Aviso Greve</th>
+                <td>{{ id }}</td>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Inicio (mês/ano)</td>
+                    <td>{{ "%02d" % row["inicio_mes"]}}/{{row["inicio_ano"]}}</td>
+                </tr>
+                {% if row["fim_mes"] %}
+                <tr>
+                    <td>Fim (mês/ano)</td>
+                    <td>{{ "%02d" % row["fim_mes"]}}/{{row["fim_ano"]}}</td>
+                </tr>
+                {% endif %}
+                {% for srow in results %}
+                {% set id = "%s.%s.%s" % ( srow[0], srow[1], srow[2] ) %}
+                {% set url = "../Entidades/%s.html" % id %}
+                    <tr>
+                        {% if loop.first %}
+                            <td rowspan="{{ loop.length }}">Participantes</td>
+                        {% endif %}
+                        <td><a href="{{ url }}">{{ id }}</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% set dados = row['dadosExcel']|to_dict %}
+        <table class="table table-striped">
+            <thead class="bg-primary text-white">
+                <tr>
+                    {% for key in dados.keys() %}
+                    <th>{{key}}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    {% for key in dados.values() %}
+                    <td>{{key}}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

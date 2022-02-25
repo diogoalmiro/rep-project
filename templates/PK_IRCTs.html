@@ -13,7 +13,7 @@
             </thead>
             <tbody>
                 {% for key in row.keys() %}
-                    {% if type(key) not is int %}
+                    {% if key|int(-1) == -1 %}
                         <tr>
                             <th>{{ key }}</th>
                             <td>{{ row[key] }}</td>

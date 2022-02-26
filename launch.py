@@ -1,4 +1,3 @@
-from email.policy import default
 import os
 import sqlite3
 import subprocess
@@ -7,6 +6,7 @@ import threading
 from datetime import date, datetime
 from io import BytesIO
 import click
+import unicodedata
 
 import pandas as pd
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
@@ -61,8 +61,11 @@ def index():
 
 ROWS_PER_PAGE = 50
 
-@app.route("/dashboard-search/")
-def server_side_search():
+# https://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-normalize-in-a-python-unicode-string#comment62045428_518232
+def normalize_term(str):
+    return unicodedata.normalize('NFD',str).encode('ASCII','ignore').decode().upper()
+
+def parse_search_arguments():
     search = {}
     search["table"] = request.args.get('table_org', "")
     search["term"] = request.args.get('organization', "")
@@ -72,7 +75,9 @@ def server_side_search():
     search["fim"] = request.args.get("ano-fim",type=int)
     search["estado"] = request.args.get("estado", "")
     search["page"] = request.args.get("page", type=int)
+    return search
 
+def parse_sql_format(search):
     sqlformat = {}
     if search["table"] == "Unions":
         sqlformat["table"] = [1,2,3,4] 
@@ -82,6 +87,7 @@ def server_side_search():
         sqlformat["table"] = [1,2,3,4,5,6,7,8]
     sqlformat["table"] = f"{','.join(str(x) for x in sqlformat['table'])}"
     sqlformat["term"] = "%{}%".format(search["term"].upper())
+    sqlformat["norm_term"] = "%{}%".format(normalize_term(search["term"]))
     sqlformat["distrito"]  = "%{}%".format(search["distrito"])
     sqlformat["setor"] = "%{}%".format(search["setor"])
     sqlformat["inicio"] = "{}-01-01".format(search["inicio"] or "0000")
@@ -89,16 +95,18 @@ def server_side_search():
     sqlformat["estado"] = "%{}%".format(search["estado"])
     sqlformat["offset"] = (search["page"] or 0) * ROWS_PER_PAGE
     sqlformat["rows_per_page"] = ROWS_PER_PAGE
+    return sqlformat
 
+@app.route("/dashboard-search/")
+def server_side_search():
+    search = parse_search_arguments()
+    sqlformat = parse_sql_format(search)
     results = []
-
     connection = sqlite3.connect(DATABASE_NAME)
-    connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta")
     cursor = connection.execute(f"""
         SELECT Tipo, nomeEntidade, ifnull(sigla, ""), distritoDescricao, estadoEntidade, codEntG, codEntE, numAlt
         FROM Organizacoes
-        WHERE 
-            (nomeEntidade LIKE :term OR ifnull(sigla,"") LIKE :term OR (codEntG || "." || codEntE) LIKE :term OR (codEntG || "." || codEntE || "." || numAlt) LIKE :term)
+        WHERE (normalized_nome LIKE :norm_term OR nomeEntidade LIKE :term OR ifnull(sigla,"") LIKE :term OR id LIKE :term OR unique_id LIKE :term)
         AND ifnull(distritoDescricao,"") LIKE :distrito
         AND dataBteConstituicao >= :inicio
         AND ifnull(dataBteExtincao, "0000-01-01") <= :fim
@@ -113,118 +121,53 @@ def server_side_search():
 
 @app.route("/export/")
 def export():
-    search = {}
-    search["table"] = request.args.get('table_org', "")
-    search["term"] = request.args.get('organization', "")
-    search["distrito"]  = request.args.get('distrito', "")
-    search["setor"] = request.args.get('setor', "")
-    search["inicio"] = request.args.get("ano-inicio", type=int)
-    search["fim"] = request.args.get("ano-fim",type=int)
-
-    sqlformat = {}
-    sqlformat["table"] = search["table"]
-    sqlformat["term"] = "%{}%".format(search["term"].upper())
-    sqlformat["distrito"]  = "%{}%".format(search["distrito"])
-    sqlformat["setor"] = "%{}%".format(search["setor"])
-    sqlformat["inicio"] = "{}-01-01".format(search["inicio"] or "0000")
-    sqlformat["fim"] = "{}-12-31".format(search["fim"] or date.today().year)
-
+    search = parse_search_arguments()
+    sqlformat = parse_sql_format(search)
     connection = sqlite3.connect(DATABASE_NAME)
-    connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta")
     
     strIO = BytesIO()
     excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
-
+    
     IDS = []
 
-    col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"]
-    rows = connection.execute("""
-        SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
-        FROM Org_Sindical
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
-        AND ifnull(Distrito_Sede,"") LIKE :distrito
-        AND ifnull(Sector, "") LIKE :setor
-        AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
-        AND ifnull(Data_Ultima_Actividade, "0000-01-01") <= :fim
-        AND :table NOT LIKE "Employees"
+    col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Morada", "Distrito da Sede", "Data de constituição", "Data de extinsão", "Ativa ou Extinta"]
+    rows = connection.execute(f"""
+        SELECT codEntG || "." || codEntE || "." || numAlt, Tipo, nomeEntidade, sigla, localMoradaEntidade, distritoDescricao, dataBteConstituicao, dataBteExtincao, estadoEntidade
+        FROM Organizacoes
+        WHERE (normalized_nome LIKE :norm_term OR nomeEntidade LIKE :term OR ifnull(sigla,"") LIKE :term OR id LIKE :term OR unique_id LIKE :term)
+        AND ifnull(distritoDescricao,"") LIKE :distrito
+        AND dataBteConstituicao >= :inicio
+        AND ifnull(dataBteExtincao, "0000-01-01") <= :fim
+        AND codEntG in ({sqlformat["table"]})
+        AND estadoEntidade LIKE :estado
     """, sqlformat).fetchall()
-    pd.DataFrame(list(rows), columns=col_names).to_excel(excel_writer, sheet_name="Organizações Sindicais", index=False)
-    IDS.extend(list(map(lambda x: x[0], rows)))
-
-    rows = connection.execute("""
-        SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
-        FROM Org_Patronal
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
-        AND ifnull(Distrito_Sede,"") LIKE :distrito
-        AND ifnull(Sector, "") LIKE :setor
-        AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
-        AND ifnull(Data_Ultima_Actividade, "0000-01-01") <= :fim
-        AND :table NOT LIKE "Unions"
-    """, sqlformat).fetchall()
-    pd.DataFrame(list(rows), columns=col_names).to_excel(excel_writer, sheet_name="Organizações de Empregadores", index=False)
-    IDS.extend(list(map(lambda x: x[0], rows)))
     
+    sind = []
+    empr = []
+    for row in rows:
+        IDS.append(row[0])
+        if int(row[0][0]) < 5: #codEntG
+            sind.append(row)
+        else:
+            empr.append(row)
+    
+    pd.DataFrame(sind, columns=col_names).to_excel(excel_writer, sheet_name="Organizações sindicais", index=False)
+    pd.DataFrame(empr, columns=col_names).to_excel(excel_writer, sheet_name="Organizações de empregadores", index=False)
+    del sind
+    del empr
+
     col_names = [ "Código Identificador da Organização", "Denominação da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
-    rows = connection.execute("""
-            SELECT DISTINCT ID_Organizacao_Sindical, Org_Sindical.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
-                       FROM Actos_Negociacao_Colectiva
-               NATURAL JOIN Outorgantes_Actos, Org_Sindical
-                      WHERE Org_Sindical.ID=ID_Organizacao_Sindical
-                        AND ID_Organizacao_Sindical IS NOT NULL 
-            UNION
-            SELECT DISTINCT ID_Organizacao_Patronal, Org_Patronal.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
-                       FROM Actos_Negociacao_Colectiva
-               NATURAL JOIN Outorgantes_Actos, Org_Patronal
-                      WHERE Org_Patronal.ID=ID_Organizacao_Patronal
-                        AND ID_Organizacao_Patronal IS NOT NULL 
-    """, sqlformat).fetchall()
+    rows = connection.execute("""SELECT * FROM  Export_IRCTs;""", sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
 
-    col_names = ["_id_greve", "Código Identificador da Organização", "Denominação da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"]
-    rows = connection.execute("""
-            SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Sindical.ID, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
-              FROM Avisos_Greve_New
-              JOIN Avisos_Greve_Participante_Sindical
-              JOIN Org_Sindical
-             WHERE Avisos_Greve_Participante_Sindical.Id_Entidade_Sindical = Org_Sindical.ID
-               AND Avisos_Greve_Participante_Sindical.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
-             UNION
-            SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Patronal.ID, Org_Patronal.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
-              FROM Avisos_Greve_New
-              JOIN Avisos_Greve_Participante_Patronal
-              JOIN Org_Patronal
-             WHERE Avisos_Greve_Participante_Patronal.Id_Entidade_Patronal = Org_Patronal.ID
-               AND Avisos_Greve_Participante_Patronal.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
-          ORDER BY Avisos_Greve_New.ID_Aviso_Greve
-    """, sqlformat).fetchall()
+    col_names = ["_id_greve", "Código Identificador da Organização", "Denominação da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim"]
+    rows = connection.execute("""SELECT * FROM Export_Avisos_Greve;""", sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
 
     col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
-    rows = connection.execute("""
-            SELECT ID_Organizacao_Sindical, Org_Sindical.Nome, Ano, Numero, Serie, URL
-              FROM Mencoes_BTE_Org_Sindical, Org_Sindical
-             WHERE Mencoes_BTE_Org_Sindical.ID_Organizacao_Sindical = Org_Sindical.ID 
-               AND Mudanca_Estatuto = TRUE
-             UNION
-            SELECT ID_Organizacao_Patronal, Org_Patronal.Nome, Ano, Numero, Serie, URL
-              FROM Mencoes_BTE_Org_Patronal, Org_Patronal
-             WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal = Org_Patronal.ID 
-               AND Mudanca_Estatuto = TRUE
-    """, sqlformat).fetchall()
+    rows = connection.execute("""SELECT * FROM Export_AlteracoesEstatutos;""", sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Estatutos", index=False)
-
-    col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
-    rows = connection.execute("""
-            SELECT ID_Organizacao_Sindical, Org_Sindical.Nome, Ano, Numero, Serie, URL
-              FROM Mencoes_BTE_Org_Sindical, Org_Sindical
-             WHERE Mencoes_BTE_Org_Sindical.ID_Organizacao_Sindical = Org_Sindical.ID 
-               AND Eleicoes = TRUE
-             UNION
-            SELECT ID_Organizacao_Patronal, Org_Patronal.Nome, Ano, Numero, Serie, URL
-              FROM Mencoes_BTE_Org_Patronal, Org_Patronal
-             WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal = Org_Patronal.ID 
-               AND Eleicoes = TRUE
-    """, sqlformat).fetchall()
+    rows = connection.execute("""SELECT * FROM Export_EleicoesCorposGerentes;""", sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Eleições", index=False)
     excel_writer.save()
     strIO.seek(0)

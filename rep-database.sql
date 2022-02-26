@@ -189,13 +189,8 @@ CREATE TABLE IF NOT EXISTS Avisos_Greve_Entidades(
 );
 
 --- USEFULL VIEWS
-CREATE VIEW IF NOT EXISTS Organizacoes(
-	codEntG, codEntE, numAlt, sigla, nomeEntidade, codigoPostalEntidade, idDistrito, distritoDescricao, estadoEntidade,
-	moradaEntidade, localMoradaEntidade, areaPostalEntidade, telefoneEntidade, faxEntidade, 
-  Tipo,
-  dataBteConstituicao,
-  dataBteExtincao
-) AS SELECT 
+DROP VIEW IF EXISTS Organizacoes;
+CREATE VIEW Organizacoes AS SELECT 
 	codEntG, codEntE, numAlt, sigla, nomeEntidade, codigoPostalEntidade, idDistrito, distritoDescricao, estadoEntidade,
 	moradaEntidade, localMoradaEntidade, areaPostalEntidade, telefoneEntidade, faxEntidade,
   CASE 
@@ -209,7 +204,10 @@ CREATE VIEW IF NOT EXISTS Organizacoes(
     WHEN codEntG = 8 THEN 'CONFEDERAÇÃO DE EMPREGADORES'
   END as Tipo,
   dataBteConstituicao,
-  dataBteExtincao
+  dataBteExtincao,
+  upper(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(nomeEntidade,'á','A'), 'ã','A'), 'â','A'), 'é','E'), 'ê','E'), 'í','I'), 'ó','O') ,'õ','O') ,'ô','O'),'ú','U'),'ç','C'),'ñ','N'),'Á','A'), 'Ã','A'), 'Â','A'), 'É','E'), 'Ê','E'), 'Í','E'), 'Ó','O') ,'Õ','O') ,'Ô','O'),'Ú','U'),'Ç','C'),'Ñ','N')) as normalized_nome,
+  codEntG || "." || codEntE as id,
+  codEntG || "." || codEntE || "." || numAlt as unique_id
 FROM 
 	Entidades
 JOIN
@@ -218,3 +216,48 @@ WHERE
 	Entidades.codEntG = max_numAlt.G AND
 	Entidades.codEntE = max_numAlt.E AND
 	Entidades.numAlt = max_numAlt.N;
+
+-- refs: https://stackoverflow.com/questions/5492508/ignore-accents-sqlite3
+
+
+-- EXPORT VIEWS
+DROP VIEW IF EXISTS Export_IRCTs;
+CREATE VIEW Export_IRCTs AS SELECT 
+  E.codEntG || "." || E.codEntE || "." || E.numAlt as ID,
+  E.nomeEntidade, I.numero, I.nomeCC, I.tipoConvencaoDescrLong, I.naturezaDescricao, I.ano, I.numBTE, I.serieBTE,
+  CASE WHEN I.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || I.Ano || "/bte" || I.Numero || "_" || I.Ano || ".pdf" ELSE "" END as urlBTE,
+  I.ambitoGeograficoIRCT
+FROM 
+  (SELECT * FROM IRCTs as I JOIN Outorgantes as O 
+    ON I.numero = O.numero AND I.numeroSequencial = O.numSeq AND I.ano = O.ano AND I.tipoConvencaoCodigo = O.tipoConv 
+    GROUP BY O.codEntG, O.condEntE, O.numAlt, I.numero, I.numeroSequencial, I.ano, I.tipoConvencaoCodigo) as I
+JOIN Entidades as E ON E.codEntG = I.codEntG AND E.codEntE = I.condEntE AND E.numAlt = I.numAlt;
+
+DROP VIEW IF EXISTS Export_Avisos_Greve;
+CREATE VIEW Export_Avisos_Greve AS SELECT 
+  A._id_greve,
+  E.codEntG || "." || E.codEntE || "." || E.numAlt as ID,
+  E.nomeEntidade,
+  A.inicio_ano, A.inicio_mes, A.fim_ano, A.fim_mes
+FROM Avisos_Greve as A
+JOIN Avisos_Greve_Entidades as AE ON A._id_greve = AE._id_greve
+JOIN Entidades as E ON AE.codEntG = E.codEntG AND AE.codEntE = E.codEntE AND AE.numAlt = E.numAlt;
+
+-- "Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"
+DROP VIEW IF EXISTS Export_AlteracoesEstatutos;
+CREATE VIEW Export_AlteracoesEstatutos AS SELECT
+  E.codEntG || "." || E.codEntE || "." || E.numAlt as ID,
+  E.nomeEntidade,
+  A.ano, A.numBTE, A.serieBTE,
+  CASE WHEN A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
+FROM AlteracoesEstatutos as A
+  JOIN Entidades as E ON A.codEntG = E.codEntG AND A.codEntE = E.codEntE AND A.numAlt = E.numAlt;
+
+DROP VIEW IF EXISTS Export_EleicoesCorposGerentes;
+CREATE VIEW Export_EleicoesCorposGerentes AS SELECT
+  E.codEntG || "." || E.codEntE || "." || E.numAlt as ID,
+  E.nomeEntidade,
+  A.ano, A.numBTE, A.serieBTE,
+  CASE WHEN A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
+FROM EleicoesCorposGerentes as A
+  JOIN Entidades as E ON A.codEntG = E.codEntG AND A.codEntE = E.codEntE AND A.numAlt = E.numAlt;

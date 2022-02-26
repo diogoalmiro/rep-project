@@ -51,7 +51,7 @@
 					{% if key|int(-1) == -1 %}
 					<tr>
 						<th>{{key}}</td>
-						<td>{{row[key]}}</td>
+						<td>{{row[key]|default('',True)}}</td>
 					</tr>
 					{% endif %}
 				{% endfor %}

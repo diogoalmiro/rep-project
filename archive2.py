@@ -56,7 +56,7 @@ def main():
         
         aggs = env.list_templates(filter_func=lambda name: name.startswith(f"{table}-"))
         for agg in aggs:
-            out = agg.removeprefix(f"{table}-")
+            out = agg[len(f"{table}-"):] # remove prefix added in 3.9
             env.get_template(agg).stream(cursor=cursor, table=table, rows=results, columns=columns).dump((data_table_path / out).open('w'))
     
 

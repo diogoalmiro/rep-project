@@ -61,6 +61,8 @@ def insert_from_table(cursor: sqlite3.Cursor, table: str, ano: int = 0):
 	return errors
 
 def main():
+	if 'rep-database.db' in os.listdir('.'):
+		os.remove('rep-database.db')
 	connection = sqlite3.connect('rep-database.db')
 	cursor = connection.cursor()
 	create_database_tables(cursor)
@@ -72,10 +74,8 @@ def main():
 			errors += insert_from_table(cursor, table, ano)
 		print(f"Errors inserting {table}: {errors}")
 	connection.commit()
-
-if __name__ == '__main__':
-	if 'rep-database.db' in os.listdir('.'):
-		os.remove('rep-database.db')
-	main()
 	greves.main()
 	archive2.main()
+
+if __name__ == '__main__':
+	main()

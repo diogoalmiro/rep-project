@@ -7,6 +7,7 @@ import threading
 from datetime import date, datetime
 from io import BytesIO
 import click
+import unicodedata
 
 import pandas as pd
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
@@ -61,6 +62,10 @@ def index():
 
 ROWS_PER_PAGE = 50
 
+# https://stackoverflow.com/questions/517923/what-is-the-best-way-to-remove-accents-normalize-in-a-python-unicode-string#comment62045428_518232
+def normalize_term(str):
+    return unicodedata.normalize('NFD',str).encode('ASCII','ignore').decode().upper()
+
 @app.route("/dashboard-search/")
 def server_side_search():
     search = {}
@@ -75,6 +80,7 @@ def server_side_search():
     sqlformat = {}
     sqlformat["table"] = search["table"]
     sqlformat["term"] = "%{}%".format(search["term"].upper())
+    sqlformat["norm_term"] = "%{}%".format(normalize_term(search["term"]))
     sqlformat["distrito"]  = "%{}%".format(search["distrito"])
     sqlformat["setor"] = "%{}%".format(search["setor"])
     sqlformat["inicio"] = "{}-01-01".format(search["inicio"] or "0000")
@@ -86,10 +92,11 @@ def server_side_search():
 
     connection = sqlite3.connect(DATABASE_NAME)
     connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta")
+    connection.create_function("normalize", 1, normalize_term)
     cursor = connection.execute("""
         SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, act2str(Activa)
         FROM Org_Patronal
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term OR normalize(Nome) LIKE :norm_term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
         AND ifnull(Sector,"") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
@@ -98,7 +105,7 @@ def server_side_search():
         UNION
         SELECT Tipo, Nome, ifnull(Acronimo, ""), Distrito_Sede, act2str(Activa)
         FROM Org_Sindical
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term OR normalize(Nome) LIKE :norm_term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
         AND ifnull(Sector,"") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
@@ -124,6 +131,7 @@ def export():
     sqlformat = {}
     sqlformat["table"] = search["table"]
     sqlformat["term"] = "%{}%".format(search["term"].upper())
+    sqlformat["norm_term"] = "%{}%".format(normalize_term(search["term"]))
     sqlformat["distrito"]  = "%{}%".format(search["distrito"])
     sqlformat["setor"] = "%{}%".format(search["setor"])
     sqlformat["inicio"] = "{}-01-01".format(search["inicio"] or "0000")
@@ -131,6 +139,7 @@ def export():
 
     connection = sqlite3.connect(DATABASE_NAME)
     connection.create_function("act2str", 1, lambda x: "Activa" if x else "Extinta")
+    connection.create_function("normalize", 1, normalize_term)
     
     strIO = BytesIO()
     excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
@@ -141,7 +150,7 @@ def export():
     rows = connection.execute("""
         SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
         FROM Org_Sindical
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term OR normalize(Nome) LIKE :norm_term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
         AND ifnull(Sector, "") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
@@ -154,7 +163,7 @@ def export():
     rows = connection.execute("""
         SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
         FROM Org_Patronal
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term)
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term OR normalize(Nome) LIKE :norm_term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
         AND ifnull(Sector, "") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio

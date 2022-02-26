@@ -132,7 +132,7 @@ def export():
 
     col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Morada", "Distrito da Sede", "Data de constituição", "Data de extinsão", "Ativa ou Extinta"]
     rows = connection.execute(f"""
-        SELECT codEntG || "." || codEntE || "." || numAlt, Tipo, nomeEntidade, sigla, localMoradaEntidade, distritoDescricao, dataBteConstituicao, dataBteExtincao, estadoEntidade
+        SELECT codEntG || "." || codEntE, Tipo, nomeEntidade, sigla, localMoradaEntidade, distritoDescricao, dataBteConstituicao, dataBteExtincao, estadoEntidade
         FROM Organizacoes
         WHERE (normalized_nome LIKE :norm_term OR nomeEntidade LIKE :term OR ifnull(sigla,"") LIKE :term OR id LIKE :term OR unique_id LIKE :term)
         AND ifnull(distritoDescricao,"") LIKE :distrito

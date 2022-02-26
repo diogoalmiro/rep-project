@@ -223,7 +223,7 @@ WHERE
 -- EXPORT VIEWS
 DROP VIEW IF EXISTS Export_IRCTs;
 CREATE VIEW Export_IRCTs AS SELECT 
-  E.codEntG || "." || E.codEntE || "." || E.numAlt as ID,
+  E.codEntG || "." || E.codEntE as ID,
   E.nomeEntidade, I.numero, I.nomeCC, I.tipoConvencaoDescrLong, I.naturezaDescricao, I.ano, I.numBTE, I.serieBTE,
   CASE WHEN I.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || I.Ano || "/bte" || I.Numero || "_" || I.Ano || ".pdf" ELSE "" END as urlBTE,
   I.ambitoGeograficoIRCT
@@ -236,7 +236,7 @@ JOIN Entidades as E ON E.codEntG = I.codEntG AND E.codEntE = I.condEntE AND E.nu
 DROP VIEW IF EXISTS Export_Avisos_Greve;
 CREATE VIEW Export_Avisos_Greve AS SELECT 
   A._id_greve,
-  E.codEntG || "." || E.codEntE || "." || E.numAlt as ID,
+  E.codEntG || "." || E.codEntE as ID,
   E.nomeEntidade,
   A.inicio_ano, A.inicio_mes, A.fim_ano, A.fim_mes
 FROM Avisos_Greve as A
@@ -246,7 +246,7 @@ JOIN Entidades as E ON AE.codEntG = E.codEntG AND AE.codEntE = E.codEntE AND AE.
 -- "Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"
 DROP VIEW IF EXISTS Export_AlteracoesEstatutos;
 CREATE VIEW Export_AlteracoesEstatutos AS SELECT
-  E.codEntG || "." || E.codEntE || "." || E.numAlt as ID,
+  E.codEntG || "." || E.codEntE as ID,
   E.nomeEntidade,
   A.ano, A.numBTE, A.serieBTE,
   CASE WHEN A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
@@ -255,7 +255,7 @@ FROM AlteracoesEstatutos as A
 
 DROP VIEW IF EXISTS Export_EleicoesCorposGerentes;
 CREATE VIEW Export_EleicoesCorposGerentes AS SELECT
-  E.codEntG || "." || E.codEntE || "." || E.numAlt as ID,
+  E.codEntG || "." || E.codEntE as ID,
   E.nomeEntidade,
   A.ano, A.numBTE, A.serieBTE,
   CASE WHEN A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE

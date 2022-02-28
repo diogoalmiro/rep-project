@@ -34,13 +34,13 @@ if "SQLITE_WEB_PASSWORD" not in os.environ:
 def run_sqlite_web(host="0.0.0.0", port=8090):
     subprocess.run(["sqlite_web",DATABASE_NAME,"--port",port,"--no-browser", "--host",host, "--password", "--read-only"])
 
-def seconds_until_5():
+def seconds_until(hour=5):
     now = datetime.now()
-    tomorrow5 = datetime.combine(now.date() + timedelta(days=1), time(hour=5))
+    tomorrow5 = datetime.combine(now.date() + timedelta(days=1), time(hour=hour))
     return (tomorrow5 - now).seconds
 
 updating = False
-def regular_update():
+def regular_update(hour):
     global updating
     print("Updating database...")
     try:
@@ -48,7 +48,7 @@ def regular_update():
         rep_database.main()
         updating = False
         # Sleep for one day
-        threading.Timer(seconds_until_5(), regular_update).start()
+        threading.Timer(seconds_until(hour), regular_update, hour).start()
     except Exception as e:
         print("Error updating database: ", e)
         # Sleep for 15min
@@ -228,7 +228,8 @@ def static_file(path='/'):
 @click.option('--port', help='webapp server port.', show_default=True, default="8080")
 @click.option('--sqlite-host', help='sqlite_web server host.', show_default=True, default="127.0.0.1")
 @click.option('--sqlite-port', help='sqlite_web server port.', show_default=True, default="8090")
-def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="8090"):
+@click.option('--update-hour', help='hour to update the database.', show_default=True, default=5)
+def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="8090", update_hour=5):
     if not os.path.isfile(DATABASE_NAME):
         # Create the database
         print("Creating database for the first time. This operation may take a while...")
@@ -243,7 +244,7 @@ def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="80
     threading.Thread(target=run_sqlite_web, args=(sqlite_host, sqlite_port)).start()
     # update database in background every day
     datetime.now()
-    threading.Timer(seconds_until_5(), regular_update).start()
+    threading.Timer(seconds_until(int(update_hour)), regular_update, int(update_hour)).start()
     app.run(host=host, port=port)
 
 

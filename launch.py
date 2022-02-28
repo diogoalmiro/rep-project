@@ -3,13 +3,13 @@ import sqlite3
 import subprocess
 import sys
 import threading
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 from io import BytesIO
 import click
 import unicodedata
 
 import pandas as pd
-from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, abort, g
 
 import rep_database
 
@@ -34,6 +34,10 @@ if "SQLITE_WEB_PASSWORD" not in os.environ:
 def run_sqlite_web(host="0.0.0.0", port=8090):
     subprocess.run(["sqlite_web",DATABASE_NAME,"--port",port,"--no-browser", "--host",host, "--password", "--read-only"])
 
+def seconds_until_5():
+    now = datetime.now()
+    tomorrow5 = datetime.combine(now.date() + timedelta(days=1), time(hour=5))
+    return (tomorrow5 - now).seconds
 
 updating = False
 def regular_update():
@@ -44,7 +48,7 @@ def regular_update():
         rep_database.main()
         updating = False
         # Sleep for one day
-        threading.Timer(86400, regular_update).start()
+        threading.Timer(seconds_until_5(), regular_update).start()
     except Exception as e:
         print("Error updating database: ", e)
         # Sleep for 15min
@@ -54,10 +58,13 @@ def regular_update():
 app = Flask(__name__)
 app.config["APPLICATION_ROOT"] = "/dot/"
 
-
-@app.route("/")
-def index():
-    return redirect("/index.html")
+def connect(): # connect to database with read-only access
+    # We could abort here howerver when database is updating
+    # the server sends either some information or a 500 error (instead of 503)
+    #global updating
+    #if updating:
+    #    return abort(503, description="Database updating, please try again later.")
+    return sqlite3.connect(f'file:{DATABASE_NAME}?mode=ro', uri=True)
 
 ROWS_PER_PAGE = 50
 
@@ -102,7 +109,7 @@ def server_side_search():
     search = parse_search_arguments()
     sqlformat = parse_sql_format(search)
     results = []
-    connection = sqlite3.connect(DATABASE_NAME)
+    connection = connect()
     cursor = connection.execute(f"""
         SELECT Tipo, nomeEntidade, ifnull(sigla, ""), distritoDescricao, estadoEntidade, codEntG, codEntE, numAlt
         FROM Organizacoes
@@ -123,7 +130,7 @@ def server_side_search():
 def export():
     search = parse_search_arguments()
     sqlformat = parse_sql_format(search)
-    connection = sqlite3.connect(DATABASE_NAME)
+    connection = connect()
     
     strIO = BytesIO()
     excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
@@ -178,7 +185,7 @@ def export():
 
 @app.route("/orgs_by_year", methods=['GET'])
 def orgs_by_year():
-    connection = sqlite3.connect(DATABASE_NAME)
+    connection = connect()
     selectstm = """SELECT Tipo, dataBteConstituicao, dataBteExtincao FROM Organizacoes"""
     rows = connection.execute(selectstm).fetchall()
     results = []
@@ -208,7 +215,12 @@ def orgs_by_year():
     return jsonify(results)
 
 @app.route("/<path:path>", methods=['GET'])
-def static_file(path):
+@app.route("/" , methods=['GET'])
+def static_file(path='/'):
+    if path[-1:] == '/':
+        path += 'index.html'
+    if path[0] == '/':
+        path = path[1:]
     return send_from_directory('static', path)
 
 @click.command()
@@ -230,7 +242,8 @@ def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="80
     
     threading.Thread(target=run_sqlite_web, args=(sqlite_host, sqlite_port)).start()
     # update database in background every day
-    threading.Timer(86400, regular_update).start()
+    datetime.now()
+    threading.Timer(seconds_until_5(), regular_update).start()
     app.run(host=host, port=port)
 
 

@@ -225,7 +225,7 @@ DROP VIEW IF EXISTS Export_IRCTs;
 CREATE VIEW Export_IRCTs AS SELECT 
   E.codEntG || "." || E.codEntE as ID,
   E.nomeEntidade, I.numero, I.nomeCC, I.tipoConvencaoDescrLong, I.naturezaDescricao, I.ano, I.numBTE, I.serieBTE,
-  CASE WHEN I.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || I.Ano || "/bte" || I.Numero || "_" || I.Ano || ".pdf" ELSE "" END as urlBTE,
+  CASE WHEN I.serieBTE = 0 OR I.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || I.Ano || "/bte" || I.Numero || "_" || I.Ano || ".pdf" ELSE "" END as urlBTE,
   I.ambitoGeograficoIRCT
 FROM 
   (SELECT * FROM IRCTs as I JOIN Outorgantes as O 
@@ -249,7 +249,7 @@ CREATE VIEW Export_AlteracoesEstatutos AS SELECT
   E.codEntG || "." || E.codEntE as ID,
   E.nomeEntidade,
   A.ano, A.numBTE, A.serieBTE,
-  CASE WHEN A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
+  CASE WHEN A.serieBTE = 0 OR A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
 FROM AlteracoesEstatutos as A
   JOIN Entidades as E ON A.codEntG = E.codEntG AND A.codEntE = E.codEntE AND A.numAlt = E.numAlt;
 
@@ -258,6 +258,6 @@ CREATE VIEW Export_EleicoesCorposGerentes AS SELECT
   E.codEntG || "." || E.codEntE as ID,
   E.nomeEntidade,
   A.ano, A.numBTE, A.serieBTE,
-  CASE WHEN A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
+  CASE WHEN A.serieBTE = 0 OR A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
 FROM EleicoesCorposGerentes as A
   JOIN Entidades as E ON A.codEntG = E.codEntG AND A.codEntE = E.codEntE AND A.numAlt = E.numAlt;

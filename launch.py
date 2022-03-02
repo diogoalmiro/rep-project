@@ -52,7 +52,7 @@ def regular_update(hour):
     except Exception as e:
         print("Error updating database: ", e)
         # Sleep for 15min
-        threading.Timer(900, regular_update).start()
+        threading.Timer(900, regular_update, hour).start()
 
 # Create a new flask web server
 app = Flask(__name__)

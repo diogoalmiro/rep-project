@@ -1242,21 +1242,21 @@ def repDatabase():
 	cursor.execute("""INSERT INTO Actos_Negociacao_Colectiva
 	SELECT DISTINCT TEMP_IRCT.NUMERO AS ID,
 				 NUMERO_SEQUENCIAL AS ID_SEQUENCIAL,
-				 NULL AS Nome_Acto,
+				 NOMECC AS Nome_Acto,
 				 TIPO_CONVENCAO_DESCR_LONG AS Tipo_Acto,
-				 NULL AS Natureza,
+				 NATUREZA_DESCRICAO AS Natureza,
 				 ANO as Ano,
-				 NULL AS Numero,
-				 NULL AS Serie,
-				 NULL AS Data,
-				 NULL AS URL,
-				 NULL AS Ambito_Geografico
+				 NUMBTE AS Numero,
+				 SERIEBTE AS Serie,
+				 date(replace(DATABTE,'.','-')) AS Data,
+				 NULL as URL,
+				 AMBITO_GEOGRAFICO_IRCT AS Ambito_Geografico
 	FROM TEMP_IRCT;""")
 
 
-	cursor.execute("""UPDATE Actos_Negociacao_Colectiva SET (Nome_Acto, Natureza, Numero, Serie, Data, Ambito_Geografico) =
-		(SELECT TEMP_IRCT.NOMECC, TEMP_IRCT.NATUREZA_DESCRICAO, TEMP_IRCT.NUMBTE, TEMP_IRCT.SERIEBTE, date(replace(TEMP_IRCT.DATABTE,'.','-')), 
-		TEMP_IRCT.AMBITO_GEOGRAFICO_IRCT FROM TEMP_IRCT WHERE ID = TEMP_IRCT.NUMERO AND ID_SEQUENCIAL = TEMP_IRCT.NUMERO_SEQUENCIAL AND Tipo_Acto = TEMP_IRCT.TIPO_CONVENCAO_DESCR_LONG AND Ano = TEMP_IRCT.ANO);""")
+	#cursor.execute("""UPDATE Actos_Negociacao_Colectiva SET (Nome_Acto, Natureza, Numero, Serie, Data, Ambito_Geografico) =
+	#	(SELECT TEMP_IRCT.NOMECC, TEMP_IRCT.NATUREZA_DESCRICAO, TEMP_IRCT.NUMBTE, TEMP_IRCT.SERIEBTE, date(replace(TEMP_IRCT.DATABTE,'.','-')), 
+	#	TEMP_IRCT.AMBITO_GEOGRAFICO_IRCT FROM TEMP_IRCT WHERE ID = TEMP_IRCT.NUMERO AND ID_SEQUENCIAL = TEMP_IRCT.NUMERO_SEQUENCIAL AND Tipo_Acto = TEMP_IRCT.TIPO_CONVENCAO_DESCR_LONG AND Ano = TEMP_IRCT.ANO);""")
 
 
 	cursor.execute("CREATE INDEX IDX1 ON TEMP_IRCT(NUMERO,NUMERO_SEQUENCIAL,ANO,CODCAE);")

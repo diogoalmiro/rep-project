@@ -144,34 +144,52 @@ def export():
     strIO = BytesIO()
     excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
 
-    IDS = []
-
-    col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"]
-    rows = connection.execute("""
-        SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
-        FROM Org_Sindical
-        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term OR normalize(Nome) LIKE :norm_term)
-        AND ifnull(Distrito_Sede,"") LIKE :distrito
-        AND ifnull(Sector, "") LIKE :setor
-        AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
-        AND ifnull(Data_Ultima_Actividade, "0000-01-01") <= :fim
-        AND :table NOT LIKE "Employees"
-    """, sqlformat).fetchall()
-    pd.DataFrame(list(rows), columns=col_names).to_excel(excel_writer, sheet_name="Organizações Sindicais", index=False)
-    IDS.extend(list(map(lambda x: x[0], rows)))
-
-    rows = connection.execute("""
-        SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
+    IDS = set()
+    ents = connection.execute("""
+        SELECT ID
         FROM Org_Patronal
         WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term OR normalize(Nome) LIKE :norm_term)
         AND ifnull(Distrito_Sede,"") LIKE :distrito
-        AND ifnull(Sector, "") LIKE :setor
+        AND ifnull(Sector,"") LIKE :setor
         AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
-        AND ifnull(Data_Ultima_Actividade, "0000-01-01") <= :fim
+        AND ifnull(Data_Ultima_Actividade,"0000-01-01") <= :fim
         AND :table NOT LIKE "Unions"
+        UNION
+        SELECT ID
+        FROM Org_Sindical
+        WHERE (Nome LIKE :term OR ifnull(Acronimo,"") LIKE :term OR ID LIKE :term OR normalize(Nome) LIKE :norm_term)
+        AND ifnull(Distrito_Sede,"") LIKE :distrito
+        AND ifnull(Sector,"") LIKE :setor
+        AND ifnull(Data_Primeira_Actividade, "0000-01-01") >= :inicio
+        AND ifnull(Data_Ultima_Actividade,"0000-01-01") <= :fim
+        AND :table NOT LIKE "Employees"
     """, sqlformat).fetchall()
-    pd.DataFrame(list(rows), columns=col_names).to_excel(excel_writer, sheet_name="Organizações de Empregadores", index=False)
-    IDS.extend(list(map(lambda x: x[0], rows)))
+    for (id,) in ents:
+        codEntG, codEntE, numAlt = id.split(".")
+        strID = f"{codEntG}.{codEntE}._%"
+        for (sid,) in connection.execute("""SELECT ID FROM Org_Patronal WHERE ID LIKE :id """, {"id": strID}).fetchall():
+            IDS.add(sid)
+        for (sid,) in connection.execute("""SELECT ID FROM Org_Sindical WHERE ID LIKE :id """, {"id": strID}).fetchall():
+            IDS.add(sid)
+
+    col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"]
+    rows_sind = []
+    rows_patr = []
+    for id in IDS:
+        sind = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
+                                FROM Org_Sindical
+                                WHERE ID = :id""", {"id": id}).fetchone()
+        if sind:
+            rows_sind.append(list(sind))
+        patr = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
+                                FROM Org_Patronal
+                                WHERE ID = :id""", {"id": id}).fetchone()
+        if patr:
+            rows_patr.append(list(patr))
+    
+
+    pd.DataFrame(rows_sind, columns=col_names).to_excel(excel_writer, sheet_name="Organizações Sindicais", index=False)
+    pd.DataFrame(rows_patr, columns=col_names).to_excel(excel_writer, sheet_name="Organizações de Empregadores", index=False)
     
     col_names = [ "Código Identificador da Organização", "Denominação da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
     rows = connection.execute("""

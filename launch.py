@@ -159,23 +159,37 @@ def export():
             empr.append(row)
     
     pd.DataFrame(sind, columns=col_names).to_excel(excel_writer, sheet_name="Organizações sindicais", index=False)
+    excel_writer.sheets["Organizações sindicais"].set_column(0, len(col_names)-1, 20)
+    excel_writer.sheets["Organizações sindicais"].autofilter(0, 0, len(sind), len(col_names)-1)
     pd.DataFrame(empr, columns=col_names).to_excel(excel_writer, sheet_name="Organizações de empregadores", index=False)
+    excel_writer.sheets["Organizações de empregadores"].set_column(0, len(col_names)-1, 20)
+    excel_writer.sheets["Organizações de empregadores"].autofilter(0, 0, len(sind), len(col_names)-1)
     del sind
     del empr
 
     col_names = [ "Código Identificador da Organização", "Denominação da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
     rows = connection.execute("""SELECT * FROM  Export_IRCTs;""", sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
+    excel_writer.sheets["Negociação coletiva"].set_column(0, len(col_names)-1, 20)
+    excel_writer.sheets["Negociação coletiva"].autofilter(0, 0, len(rows), len(col_names)-1)
 
     col_names = ["_id_greve", "Código Identificador da Organização", "Denominação da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim"]
     rows = connection.execute("""SELECT * FROM Export_Avisos_Greve;""", sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
+    excel_writer.sheets["Pré avisos de greve"].set_column(0, len(col_names)-1, 20)
+    excel_writer.sheets["Pré avisos de greve"].autofilter(0, 0, len(rows), len(col_names)-1)
 
     col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
     rows = connection.execute("""SELECT * FROM Export_AlteracoesEstatutos;""", sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Estatutos", index=False)
+    excel_writer.sheets["Estatutos"].set_column(0, len(col_names)-1, 20)
+    excel_writer.sheets["Estatutos"].autofilter(0, 0, len(rows), len(col_names)-1)
+
     rows = connection.execute("""SELECT * FROM Export_EleicoesCorposGerentes;""", sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Eleições", index=False)
+    excel_writer.sheets["Eleições"].set_column(0, len(col_names)-1, 20)
+    excel_writer.sheets["Eleições"].autofilter(0, 0, len(rows), len(col_names)-1)
+
     excel_writer.save()
     strIO.seek(0)
     return send_file(strIO,

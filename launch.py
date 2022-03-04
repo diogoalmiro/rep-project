@@ -118,6 +118,10 @@ def server_side_search():
 
     return render_template("dashboard-search.html", results=results, search=search, last_page=len(results) < ROWS_PER_PAGE, date=date)
 
+def id_value(id: str):
+    g, e, a = id.split(".")
+    return int(g) * 1000000 + int(e) * 1000 + int(a)
+
 @app.route("/export/")
 def export():
     search = {}
@@ -174,8 +178,8 @@ def export():
 
     col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"]
     rows_sind = []
-    rows_patr = []
-    for id in IDS:
+    rows_patr = []    
+    for id in sorted(IDS, key=lambda x: id_value(x)):
         sind = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
                                 FROM Org_Sindical
                                 WHERE ID = :id""", {"id": id}).fetchone()
@@ -187,9 +191,13 @@ def export():
         if patr:
             rows_patr.append(list(patr))
     
-
-    pd.DataFrame(rows_sind, columns=col_names).to_excel(excel_writer, sheet_name="Organizações Sindicais", index=False)
-    pd.DataFrame(rows_patr, columns=col_names).to_excel(excel_writer, sheet_name="Organizações de Empregadores", index=False)
+    pd.DataFrame(rows_sind, columns=col_names).to_excel(excel_writer, sheet_name="Organizações sindicais", index=False)
+    excel_writer.sheets["Organizações sindicais"].set_column(0, len(col_names)-1, 15)
+    excel_writer.sheets["Organizações sindicais"].autofilter(0, 0, len(rows_sind), len(col_names)-1)
+    
+    pd.DataFrame(rows_patr, columns=col_names).to_excel(excel_writer, sheet_name="Organizações de empregadores", index=False)
+    excel_writer.sheets["Organizações de empregadores"].set_column(0, len(col_names)-1, 15)
+    excel_writer.sheets["Organizações de empregadores"].autofilter(0, 0, len(rows_patr), len(col_names)-1)
     
     col_names = [ "Código Identificador da Organização", "Denominação da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
     rows = connection.execute("""
@@ -206,6 +214,8 @@ def export():
                         AND ID_Organizacao_Patronal IS NOT NULL 
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
+    excel_writer.sheets["Negociação coletiva"].set_column(0, len(col_names)-1, 15)
+    excel_writer.sheets["Negociação coletiva"].autofilter(0, 0, len(rows), len(col_names)-1)
 
     col_names = ["_id_greve", "Código Identificador da Organização", "Denominação da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"]
     rows = connection.execute("""
@@ -225,6 +235,8 @@ def export():
           ORDER BY Avisos_Greve_New.ID_Aviso_Greve
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
+    excel_writer.sheets["Pré avisos de greve"].set_column(0, len(col_names)-1, 15)
+    excel_writer.sheets["Pré avisos de greve"].autofilter(0, 0, len(rows), len(col_names)-1)
 
     col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
     rows = connection.execute("""
@@ -239,6 +251,8 @@ def export():
                AND Mudanca_Estatuto = TRUE
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Estatutos", index=False)
+    excel_writer.sheets["Estatutos"].set_column(0, len(col_names)-1, 15)
+    excel_writer.sheets["Estatutos"].autofilter(0, 0, len(rows), len(col_names)-1)
 
     col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
     rows = connection.execute("""
@@ -253,6 +267,9 @@ def export():
                AND Eleicoes = TRUE
     """, sqlformat).fetchall()
     pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Eleições", index=False)
+    excel_writer.sheets["Eleições"].set_column(0, len(col_names)-1, 15)
+    excel_writer.sheets["Eleições"].autofilter(0, 0, len(rows), len(col_names)-1)
+
     excel_writer.save()
     strIO.seek(0)
     return send_file(strIO,

@@ -53,7 +53,7 @@ def getTable_AlteracoesEstatutos(ano,cursor):
 
 
 def alteracoesEstatutos(cursor):
-	for ano in range(1977,datetime.today().year+1):
+	for ano in range(1975,datetime.today().year+1):
 		getTable_AlteracoesEstatutos(ano,cursor)
 
 
@@ -91,7 +91,7 @@ def getTable_EleicoesCorposGerentes(ano,cursor):
 
 
 def eleicoesCorposGerentes(cursor):
-	for ano in range(1977,datetime.today().year+1):
+	for ano in range(1975,datetime.today().year+1):
 		getTable_EleicoesCorposGerentes(ano,cursor)
 
 
@@ -184,7 +184,7 @@ def getTable_Ircts(ano,cursor):
 
 
 def ircts(cursor):
-	for ano in range(1977,datetime.today().year+1):
+	for ano in range(1975,datetime.today().year+1):
 		getTable_Ircts(ano,cursor)
 
 
@@ -212,7 +212,7 @@ def getTable_Outorgantes(ano,cursor):
 		cursor.execute(sql_command)
 
 def outorgantes(cursor):
-	for ano in range(1977,datetime.today().year+1):
+	for ano in range(1975,datetime.today().year+1):
 		getTable_Outorgantes(ano,cursor)
 
 
@@ -240,7 +240,7 @@ def getTable_Processos(ano,cursor):
 
 
 def processos(cursor):
-	for ano in range(1977,datetime.today().year+1):
+	for ano in range(1975,datetime.today().year+1):
 		getTable_Processos(ano,cursor)
 
 

@@ -88,12 +88,6 @@ de 1996 à atualidade.
 		</div>
 		<script>
 
-			let inital_year = 1996;
-			let labels = []
-			for( let i = inital_year; i <= new Date().getFullYear(); i++ ){
-				labels.push(i);
-			}
-
 			let sublabelSindical = {
 				"CONFEDERAÇÃO SINDICAL": "Confederações",
 				"FEDERAÇÃO SINDICAL": "Federações",
@@ -120,7 +114,8 @@ de 1996 à atualidade.
 				"UNIÃO DE EMPREGADORES": "#0000FF"
 			}
 
-			fetch("orgs_by_year").then(r => r.json()).then(data => {
+			fetch("orgs_by_year?since=1996").then(r => r.json()).then(data => {
+				let labels = data.map(d => d.ano);
 				let min = 0;
 				let max = data.reduce( 
 					(acc, o) => 

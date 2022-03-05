@@ -37,11 +37,13 @@ def run_sqlite_web(host="0.0.0.0", port=8090):
 
 
 updating = False
+tmp_entidades = []
 def regular_update():
-    global updating
+    global updating, tmp_entidades
     print("Updating database...")
     try:
         updating = True
+        tmp_entidades = rep_database.json.loads(rep_database.getResponse("entidades", 0)).values()
         rep_database.repDatabase()
         updating = False
         # Sleep for one day
@@ -269,18 +271,17 @@ def export():
             download_name='data-export_%s.xlsx' % datetime.now().strftime("%Y-%m-%d-%H_%M_%S"),
             as_attachment=True)
 
-@app.route("/orgs_by_year", methods=['GET'])
+@app.route("/orgs_by_year", methods=['GET'], )
 def org_by_year():
     results = []
     seen = set()
-    tmp_entidades = rep_database.json.loads(rep_database.getResponse("entidades", 0)).values()
     entidades = []
     for entidade in tmp_entidades:
         id = f"{entidade['codEntG']}.{entidade['codEntE']}"
         if id not in seen:
             entidades.append(entidade)
             seen.add(id)
-    for ano in range(1996, date.today().year + 1):
+    for ano in range(request.args.get('since',1996,int), date.today().year + 1):
         curr_obj = {
             'ano': ano,
             'CONFEDERAÇÃO SINDICAL': 0,
@@ -333,6 +334,7 @@ def static_file(path='/'):
 @click.option('--sqlite-host', help='sqlite_web server host.', show_default=True, default="127.0.0.1")
 @click.option('--sqlite-port', help='sqlite_web server port.', show_default=True, default="8090")
 def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="8090"):
+    global tmp_entidades
     if not os.path.isfile(DATABASE_NAME):
         # Create the database
         print("Creating database for the first time. This operation may take a while...")
@@ -343,6 +345,8 @@ def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="80
             print("Error creating database:\n ", e)
             os.remove(DATABASE_NAME)
             sys.exit(1)
+    
+    tmp_entidades = rep_database.json.loads(rep_database.getResponse("entidades", 0)).values()
     
     threading.Thread(target=run_sqlite_web, args=(sqlite_host, sqlite_port)).start()
     # update database in background every day

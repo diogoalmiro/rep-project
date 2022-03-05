@@ -1,4 +1,3 @@
-from email.policy import default
 import os
 import sqlite3
 import subprocess
@@ -13,6 +12,8 @@ import pandas as pd
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
 
 import rep_database
+
+import time
 
 DATABASE_NAME = "rep-database.db"
 
@@ -149,6 +150,7 @@ def export():
     excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
 
     IDS = set()
+    start = time.monotonic()
     ents = connection.execute("""
         SELECT ID
         FROM Org_Patronal
@@ -175,100 +177,122 @@ def export():
             IDS.add(sid)
         for (sid,) in connection.execute("""SELECT ID FROM Org_Sindical WHERE ID LIKE :id """, {"id": strID}).fetchall():
             IDS.add(sid)
-
-    col_names = ["Código Identificador da Organização" , "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"]
-    rows_sind = []
-    rows_patr = []    
+    print(time.monotonic() - start, "Fetched IDs")
+    pd_sind = pd.DataFrame(columns=["Código Identificador da Organização", "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"])
+    pd_patr = pd.DataFrame(columns=["Código Identificador da Organização", "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"])
+    pd_negc = pd.DataFrame(columns=["Código Identificador da Organização", "Denominação da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ])
+    pd_padg = pd.DataFrame(columns=["_id_greve", "Código Identificador da Organização", "Denominação da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"])
+    pd_esta = pd.DataFrame(columns=["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"])
+    pd_elei = pd.DataFrame(columns=["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"])
+    time_fetch_sind_info = 0
+    time_fetch_patr_info = 0
+    time_fetch_negc_info = 0
+    time_fetch_padg_info = 0
+    time_fetch_esta_info = 0
+    time_fetch_elei_info = 0
     for id in sorted(IDS, key=lambda x: id_value(x)):
-        sind = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
-                                FROM Org_Sindical
-                                WHERE ID = :id""", {"id": id}).fetchone()
-        if sind:
-            rows_sind.append(list(sind))
-        patr = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa)
-                                FROM Org_Patronal
-                                WHERE ID = :id""", {"id": id}).fetchone()
-        if patr:
-            rows_patr.append(list(patr))
-    
-    pd.DataFrame(rows_sind, columns=col_names).to_excel(excel_writer, sheet_name="Organizações sindicais", index=False)
-    excel_writer.sheets["Organizações sindicais"].set_column(0, len(col_names)-1, 15)
-    excel_writer.sheets["Organizações sindicais"].autofilter(0, 0, len(rows_sind), len(col_names)-1)
-    
-    pd.DataFrame(rows_patr, columns=col_names).to_excel(excel_writer, sheet_name="Organizações de empregadores", index=False)
-    excel_writer.sheets["Organizações de empregadores"].set_column(0, len(col_names)-1, 15)
-    excel_writer.sheets["Organizações de empregadores"].autofilter(0, 0, len(rows_patr), len(col_names)-1)
-    
-    col_names = [ "Código Identificador da Organização", "Denominação da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ]
-    rows = connection.execute("""
-            SELECT DISTINCT ID_Organizacao_Sindical, Org_Sindical.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
-                       FROM Actos_Negociacao_Colectiva
-               NATURAL JOIN Outorgantes_Actos, Org_Sindical
-                      WHERE Org_Sindical.ID=ID_Organizacao_Sindical
-                        AND ID_Organizacao_Sindical IS NOT NULL 
-            UNION
-            SELECT DISTINCT ID_Organizacao_Patronal, Org_Patronal.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
-                       FROM Actos_Negociacao_Colectiva
-               NATURAL JOIN Outorgantes_Actos, Org_Patronal
-                      WHERE Org_Patronal.ID=ID_Organizacao_Patronal
-                        AND ID_Organizacao_Patronal IS NOT NULL 
-    """, sqlformat).fetchall()
-    pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
-    excel_writer.sheets["Negociação coletiva"].set_column(0, len(col_names)-1, 15)
-    excel_writer.sheets["Negociação coletiva"].autofilter(0, 0, len(rows), len(col_names)-1)
+        nome = ""
 
-    col_names = ["_id_greve", "Código Identificador da Organização", "Denominação da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"]
-    rows = connection.execute("""
-            SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Sindical.ID, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
+        start = time.monotonic()
+        sind = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa) FROM Org_Sindical WHERE ID = :id""", {"id": id}).fetchone()
+        if sind:
+            nome = sind[2]
+            pd_sind.loc[pd_sind.shape[0]] = sind
+        time_fetch_sind_info += time.monotonic() - start
+        start = time.monotonic()
+        patr = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa) FROM Org_Patronal WHERE ID = :id""", {"id": id}).fetchone()
+        if patr:
+            nome = patr[2]
+            pd_patr.loc[pd_patr.shape[0]] = patr
+        time_fetch_patr_info += time.monotonic() - start
+        start = time.monotonic()
+        negc = connection.execute("""
+            SELECT DISTINCT :id, :nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
+                       FROM Actos_Negociacao_Colectiva
+                       JOIN Outorgantes_Actos
+                      WHERE (ID_Organizacao_Sindical = :id OR ID_Organizacao_Patronal = :id)
+                         AND Outorgantes_Actos.ID = Actos_Negociacao_Colectiva.ID AND Outorgantes_Actos.ID_Sequencial = Actos_Negociacao_Colectiva.ID_Sequencial AND Outorgantes_Actos.Ano = Actos_Negociacao_Colectiva.Ano
+                         ORDER BY Actos_Negociacao_Colectiva.Ano ASC, Actos_Negociacao_Colectiva.Numero ASC""", {'id': id, 'nome': nome}).fetchall()
+        pd_negc = pd.concat([pd_negc, pd.DataFrame(negc, columns=pd_negc.columns)], ignore_index=True)
+        time_fetch_negc_info += time.monotonic() - start
+        start = time.monotonic()
+        padg = connection.execute("""
+            SELECT Avisos_Greve_New.ID_Aviso_Greve, :id, :nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
               FROM Avisos_Greve_New
               JOIN Avisos_Greve_Participante_Sindical
-              JOIN Org_Sindical
-             WHERE Avisos_Greve_Participante_Sindical.Id_Entidade_Sindical = Org_Sindical.ID
+             WHERE Avisos_Greve_Participante_Sindical.Id_Entidade_Sindical = :id
                AND Avisos_Greve_Participante_Sindical.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
              UNION
-            SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Patronal.ID, Org_Patronal.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
+            SELECT Avisos_Greve_New.ID_Aviso_Greve, :id, :nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
               FROM Avisos_Greve_New
               JOIN Avisos_Greve_Participante_Patronal
-              JOIN Org_Patronal
-             WHERE Avisos_Greve_Participante_Patronal.Id_Entidade_Patronal = Org_Patronal.ID
+             WHERE Avisos_Greve_Participante_Patronal.Id_Entidade_Patronal = :id
                AND Avisos_Greve_Participante_Patronal.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
           ORDER BY Avisos_Greve_New.ID_Aviso_Greve
-    """, sqlformat).fetchall()
-    pd.DataFrame(filter(lambda x: x[1] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
-    excel_writer.sheets["Pré avisos de greve"].set_column(0, len(col_names)-1, 15)
-    excel_writer.sheets["Pré avisos de greve"].autofilter(0, 0, len(rows), len(col_names)-1)
-
-    col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
-    rows = connection.execute("""
-            SELECT ID_Organizacao_Sindical, Org_Sindical.Nome, Ano, Numero, Serie, URL
-              FROM Mencoes_BTE_Org_Sindical, Org_Sindical
-             WHERE Mencoes_BTE_Org_Sindical.ID_Organizacao_Sindical = Org_Sindical.ID 
+        """, {'id': id, 'nome': nome}).fetchall()
+        pd_padg = pd.concat([pd_padg, pd.DataFrame(padg, columns=pd_padg.columns)], ignore_index=True)
+        time_fetch_padg_info += time.monotonic() - start
+        start = time.monotonic()
+        esta = connection.execute("""
+            SELECT :id, :nome, Ano, Numero, Serie, URL
+              FROM Mencoes_BTE_Org_Sindical 
+             WHERE ID_Organizacao_Sindical = :id
                AND Mudanca_Estatuto = TRUE
              UNION
-            SELECT ID_Organizacao_Patronal, Org_Patronal.Nome, Ano, Numero, Serie, URL
-              FROM Mencoes_BTE_Org_Patronal, Org_Patronal
-             WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal = Org_Patronal.ID 
+            SELECT :id, :nome, Ano, Numero, Serie, URL
+              FROM Mencoes_BTE_Org_Patronal
+             WHERE ID_Organizacao_Patronal = :id 
                AND Mudanca_Estatuto = TRUE
-    """, sqlformat).fetchall()
-    pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Estatutos", index=False)
-    excel_writer.sheets["Estatutos"].set_column(0, len(col_names)-1, 15)
-    excel_writer.sheets["Estatutos"].autofilter(0, 0, len(rows), len(col_names)-1)
-
-    col_names = ["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"]
-    rows = connection.execute("""
-            SELECT ID_Organizacao_Sindical, Org_Sindical.Nome, Ano, Numero, Serie, URL
-              FROM Mencoes_BTE_Org_Sindical, Org_Sindical
-             WHERE Mencoes_BTE_Org_Sindical.ID_Organizacao_Sindical = Org_Sindical.ID 
+          ORDER BY Ano ASC, Numero ASC
+        """, {'id': id, 'nome': nome}).fetchall()
+        pd_esta = pd.concat([pd_esta, pd.DataFrame(esta, columns=pd_esta.columns)], ignore_index=True)
+        time_fetch_esta_info += time.monotonic() - start
+        start = time.monotonic()
+        elei = connection.execute("""
+            SELECT :id, :nome, Ano, Numero, Serie, URL
+              FROM Mencoes_BTE_Org_Sindical
+             WHERE ID_Organizacao_Sindical = :id
                AND Eleicoes = TRUE
              UNION
-            SELECT ID_Organizacao_Patronal, Org_Patronal.Nome, Ano, Numero, Serie, URL
-              FROM Mencoes_BTE_Org_Patronal, Org_Patronal
-             WHERE Mencoes_BTE_Org_Patronal.ID_Organizacao_Patronal = Org_Patronal.ID 
+            SELECT :id, :nome, Ano, Numero, Serie, URL
+              FROM Mencoes_BTE_Org_Patronal
+             WHERE ID_Organizacao_Patronal = :id
                AND Eleicoes = TRUE
-    """, sqlformat).fetchall()
-    pd.DataFrame(filter(lambda x: x[0] in IDS, list(rows)), columns=col_names).to_excel(excel_writer, sheet_name="Eleições", index=False)
-    excel_writer.sheets["Eleições"].set_column(0, len(col_names)-1, 15)
-    excel_writer.sheets["Eleições"].autofilter(0, 0, len(rows), len(col_names)-1)
+            ORDER BY Ano ASC, Numero ASC
+        """, {'id': id, 'nome': nome}).fetchall()
+        pd_elei = pd.concat([pd_elei, pd.DataFrame(elei, columns=pd_elei.columns)], ignore_index=True)
+        time_fetch_elei_info += time.monotonic() - start
+    
+    print("Fetched sindical info in {:.2f}s".format(time_fetch_sind_info))
+    print("Fetched patronal info in {:.2f}s".format(time_fetch_patr_info))
+    print("Fetched negociacao colectiva info in {:.2f}s".format(time_fetch_negc_info))
+    print("Fetched avisos greve info in {:.2f}s".format(time_fetch_padg_info))
+    print("Fetched estatuto info in {:.2f}s".format(time_fetch_esta_info))
+    print("Fetched eleicoes info in {:.2f}s".format(time_fetch_elei_info))
+
+    pd_sind.to_excel(excel_writer, sheet_name="Organizações sindicais", index=False)
+    excel_writer.sheets["Organizações sindicais"].set_column(0, pd_sind.shape[1]-1, 15)
+    excel_writer.sheets["Organizações sindicais"].autofilter(0, 0, pd_sind.shape[0], pd_sind.shape[1]-1)
+    
+    pd_patr.to_excel(excel_writer, sheet_name="Organizações de empregadores", index=False)
+    excel_writer.sheets["Organizações de empregadores"].set_column(0, pd_patr.shape[1]-1, 15)
+    excel_writer.sheets["Organizações de empregadores"].autofilter(0, 0, pd_patr.shape[0], pd_patr.shape[1]-1)
+    
+    pd_negc.to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
+    excel_writer.sheets["Negociação coletiva"].set_column(0, pd_negc.shape[1]-1, 15)
+    excel_writer.sheets["Negociação coletiva"].autofilter(0, 0, pd_negc.shape[0], pd_negc.shape[1]-1)
+
+    pd_padg.to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
+    excel_writer.sheets["Pré avisos de greve"].set_column(0, pd_padg.shape[1]-1, 15)
+    excel_writer.sheets["Pré avisos de greve"].autofilter(0, 0, pd_padg.shape[0], pd_padg.shape[1]-1)
+    
+    pd_esta.to_excel(excel_writer, sheet_name="Estatutos", index=False)
+    excel_writer.sheets["Estatutos"].set_column(0, pd_esta.shape[1]-1, 15)
+    excel_writer.sheets["Estatutos"].autofilter(0, 0, pd_esta.shape[0], pd_esta.shape[1]-1)
+
+    pd_elei.to_excel(excel_writer, sheet_name="Eleições", index=False)
+    excel_writer.sheets["Eleições"].set_column(0, pd_elei.shape[1]-1, 15)
+    excel_writer.sheets["Eleições"].autofilter(0, 0, pd_elei.shape[0], pd_elei.shape[1]-1)
 
     excel_writer.save()
     strIO.seek(0)

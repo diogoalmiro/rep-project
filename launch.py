@@ -3,7 +3,7 @@ import sqlite3
 import subprocess
 import sys
 import threading
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, time
 from io import BytesIO
 import click
 import unicodedata
@@ -35,23 +35,27 @@ if "SQLITE_WEB_PASSWORD" not in os.environ:
 def run_sqlite_web(host="0.0.0.0", port=8090):
     subprocess.run(["sqlite_web",DATABASE_NAME,"--port",port,"--no-browser", "--host",host, "--password", "--read-only"])
 
+def seconds_until(hour=5):
+    now = datetime.now()
+    tomorrowH = datetime.combine(now.date() + timedelta(days=1), time(hour=hour))
+    return (tomorrowH - now).seconds
 
 updating = False
 tmp_entidades = []
-def regular_update():
+def regular_update(hour):
     global updating, tmp_entidades
-    print("Updating database...")
+    print("Updating database...", datetime.now())
     try:
         updating = True
         tmp_entidades = rep_database.json.loads(rep_database.getResponse("entidades", 0)).values()
         rep_database.repDatabase()
         updating = False
         # Sleep for one day
-        threading.Timer(86400, regular_update).start()
+        threading.Timer(seconds_until(hour), regular_update, (hour,)).start()
     except Exception as e:
         print("Error updating database: ", e)
         # Sleep for 15min
-        threading.Timer(900, regular_update).start()
+        threading.Timer(900, regular_update, (hour,)).start()
 
 # Create a new flask web server
 app = Flask(__name__)
@@ -333,7 +337,8 @@ def static_file(path='/'):
 @click.option('--port', help='webapp server port.', show_default=True, default="8080")
 @click.option('--sqlite-host', help='sqlite_web server host.', show_default=True, default="127.0.0.1")
 @click.option('--sqlite-port', help='sqlite_web server port.', show_default=True, default="8090")
-def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="8090"):
+@click.option('--update-hour', help='hour to update the database.', show_default=True, default=5)
+def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="8090", update_hour=5):
     global tmp_entidades
     if not os.path.isfile(DATABASE_NAME):
         # Create the database
@@ -350,7 +355,7 @@ def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="80
     
     threading.Thread(target=run_sqlite_web, args=(sqlite_host, sqlite_port)).start()
     # update database in background every day
-    threading.Timer(86400, regular_update).start()
+    threading.Timer(seconds_until(int(update_hour)), regular_update, (int(update_hour),)).start()
     app.run(host=host, port=port)
 
 

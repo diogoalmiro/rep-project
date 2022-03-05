@@ -48,11 +48,11 @@ def regular_update(hour):
         rep_database.main()
         updating = False
         # Sleep for one day
-        threading.Timer(seconds_until(hour), regular_update, hour).start()
+        threading.Timer(seconds_until(hour), regular_update, (hour,)).start()
     except Exception as e:
         print("Error updating database: ", e)
         # Sleep for 15min
-        threading.Timer(900, regular_update, hour).start()
+        threading.Timer(900, regular_update, (hour,)).start()
 
 # Create a new flask web server
 app = Flask(__name__)
@@ -257,8 +257,7 @@ def main(host="127.0.0.1", port="8080", sqlite_host="127.0.0.1", sqlite_port="80
     
     threading.Thread(target=run_sqlite_web, args=(sqlite_host, sqlite_port)).start()
     # update database in background every day
-    datetime.now()
-    threading.Timer(seconds_until(int(update_hour)), regular_update, int(update_hour)).start()
+    threading.Timer(seconds_until(int(update_hour)), regular_update, (int(update_hour),)).start()
     app.run(host=host, port=port)
 
 

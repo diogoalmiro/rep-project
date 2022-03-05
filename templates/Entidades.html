@@ -68,7 +68,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for srow in fetchall("SELECT codEntG, codEntE, numAlt,numeroEleicao,tipo,especie,subEspecie,numero,ano,servico,dataEleicao FROM EleicoesCorposGerentes WHERE codEntG = ? AND codEntE = ? AND numAlt = ?",row["codEntG"],row["codEntE"],row["numAlt"]) %}
+                {% for srow in fetchall("SELECT codEntG, codEntE, numAlt,numeroEleicao,tipo,especie,subEspecie,numero,ano,servico,dataEleicao FROM EleicoesCorposGerentes WHERE codEntG = ? AND codEntE = ?",row["codEntG"],row["codEntE"]) %}
                 <tr>
                     <td>
                         {% set id = "%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3], srow[4], srow[5], srow[6], srow[7], srow[8], srow[9] ) %}
@@ -91,7 +91,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for srow in fetchall("SELECT codEntG, codEntE, numAlt, numSeqAlt,tipo,especie,subEspecie,numero,ano,servico,dataBTE FROM AlteracoesEstatutos WHERE codEntG = ? AND codEntE = ? AND numAlt = ?",row["codEntG"],row["codEntE"],row["numAlt"]) %}
+                {% for srow in fetchall("SELECT codEntG, codEntE, numAlt, numSeqAlt,tipo,especie,subEspecie,numero,ano,servico,dataBTE FROM AlteracoesEstatutos WHERE codEntG = ? AND codEntE = ?",row["codEntG"],row["codEntE"]) %}
                 <tr>
                     <td>
                         {% set id = "%s.%s.%s.%s.%s.%s.%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3], srow[4], srow[5], srow[6], srow[7], srow[8], srow[9] ) %}
@@ -114,7 +114,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for srow in fetchall("SELECT numero, numSeq, ano, tipoConv FROM Outorgantes WHERE CodEntG = ? AND CondEntE = ? AND numAlt = ?",row["codEntG"],row["codEntE"],row["numAlt"]) %}
+                {% for srow in fetchall("SELECT numero, numSeq, ano, tipoConv FROM Outorgantes WHERE CodEntG = ? AND CondEntE = ?",row["codEntG"],row["codEntE"]) %}
                 <tr>
                     <td>
                         {% set id = "%s.%s.%s.%s" % ( srow[0], srow[1], srow[2], srow[3] ) %}
@@ -135,7 +135,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for srow in fetchall("SELECT _id_greve FROM Avisos_Greve_Entidades WHERE codEntG = ? AND codEntE = ? AND numAlt = ?",row["codEntG"],row["codEntE"],row["numAlt"]) %}
+                {% for srow in fetchall("SELECT _id_greve FROM Avisos_Greve_Entidades WHERE codEntG = ? AND codEntE = ?",row["codEntG"],row["codEntE"]) %}
                 <tr>
                     <td>
                         {% set id = "%s" % srow[0] %}

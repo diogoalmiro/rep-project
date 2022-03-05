@@ -178,22 +178,13 @@ def export():
     pd_padg = pd.DataFrame(columns=["_id_greve", "Código Identificador da Organização", "Denominação da Organização", "Ano de Início", "Mês de Início", "Ano de Fim", "Mês de Fim", "CAE"])
     pd_esta = pd.DataFrame(columns=["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"])
     pd_elei = pd.DataFrame(columns=["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"])
-    time_fetch_sind_info = 0
-    time_fetch_patr_info = 0
-    time_fetch_negc_info = 0
-    time_fetch_padg_info = 0
-    time_fetch_esta_info = 0
-    time_fetch_elei_info = 0
-
-    start = time.monotonic()
+    
     sind = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa) FROM Org_Sindical""").fetchall()
     pd_sind.from_records(filter(lambda x: x[0] in IDS, sind), columns=pd_sind.columns).to_excel(excel_writer, sheet_name="Organizações sindicais", index=False)
-    time_fetch_sind_info += time.monotonic() - start
-    start = time.monotonic()
+    
     patr = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa) FROM Org_Patronal""").fetchall()
     pd_patr.from_records(filter(lambda x: x[0] in IDS, patr), columns=pd_patr.columns).to_excel(excel_writer, sheet_name="Organizações de empregadores", index=False)
-    time_fetch_patr_info += time.monotonic() - start
-    start = time.monotonic()
+    
     negc = connection.execute("""
         SELECT DISTINCT ID_Organizacao_Sindical as ID, Org_Sindical.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
                        FROM Actos_Negociacao_Colectiva
@@ -208,8 +199,7 @@ def export():
                         AND ID_Organizacao_Patronal IS NOT NULL
                         ORDER BY ID ASC, Actos_Negociacao_Colectiva.Ano ASC, Actos_Negociacao_Colectiva.Numero ASC""").fetchall()
     pd_negc.from_records(filter(lambda x: x[0] in IDS, negc), columns=pd_negc.columns).to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
-    time_fetch_negc_info += time.monotonic() - start
-    start = time.monotonic()
+    
     padg = connection.execute("""
             SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Sindical.ID, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
               FROM Avisos_Greve_New
@@ -227,8 +217,7 @@ def export():
           ORDER BY Avisos_Greve_New.ID_Aviso_Greve
         """).fetchall()
     pd_padg.from_records(filter(lambda x: x[1] in IDS, padg), columns=pd_padg.columns).to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
-    time_fetch_padg_info += time.monotonic() - start
-    start = time.monotonic()
+    
     esta = connection.execute("""
              SELECT ID_Organizacao_Sindical as ID, Org_Sindical.Nome, Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Sindical, Org_Sindical
@@ -242,8 +231,7 @@ def export():
           ORDER BY ID ASC, Ano ASC, Numero ASC
         """).fetchall()
     pd_esta.from_records(filter(lambda x: x[0] in IDS, esta), columns=pd_esta.columns).to_excel(excel_writer, sheet_name="Estatutos", index=False)
-    time_fetch_esta_info += time.monotonic() - start
-    start = time.monotonic()
+    
     elei = connection.execute("""
             SELECT ID_Organizacao_Sindical as ID, Org_Sindical.Nome, Ano, Numero, Serie, URL
               FROM Mencoes_BTE_Org_Sindical, Org_Sindical
@@ -257,15 +245,7 @@ def export():
             ORDER BY ID ASC, Ano ASC, Numero ASC
         """).fetchall()
     pd_elei.from_records(filter(lambda x: x[0] in IDS, elei), columns=pd_elei.columns).to_excel(excel_writer, sheet_name="Eleições", index=False)
-    time_fetch_elei_info += time.monotonic() - start
     
-    print("Fetched sindical info in {:.2f}s".format(time_fetch_sind_info))
-    print("Fetched patronal info in {:.2f}s".format(time_fetch_patr_info))
-    print("Fetched negociacao colectiva info in {:.2f}s".format(time_fetch_negc_info))
-    print("Fetched avisos greve info in {:.2f}s".format(time_fetch_padg_info))
-    print("Fetched estatuto info in {:.2f}s".format(time_fetch_esta_info))
-    print("Fetched eleicoes info in {:.2f}s".format(time_fetch_elei_info))
-
     excel_writer.sheets["Organizações sindicais"].set_column(0, pd_sind.shape[1]-1, 15)
     excel_writer.sheets["Organizações sindicais"].autofilter(0, 0, pd_sind.shape[0], pd_sind.shape[1]-1)
     

@@ -13,7 +13,6 @@ from flask import Flask, jsonify, render_template, request, send_file, send_from
 
 import rep_database
 
-import time
 
 DATABASE_NAME = "rep-database.db"
 
@@ -144,7 +143,6 @@ def export():
     excel_writer = pd.ExcelWriter(strIO, engine="xlsxwriter")
 
     IDS = set()
-    start = time.monotonic()
     ents = connection.execute("""
         SELECT ID
         FROM Org_Patronal
@@ -171,7 +169,7 @@ def export():
             IDS.add(sid)
         for (sid,) in connection.execute("""SELECT ID FROM Org_Sindical WHERE ID LIKE :id """, {"id": strID}).fetchall():
             IDS.add(sid)
-    print(time.monotonic() - start, "Fetched IDs")
+    
     pd_sind = pd.DataFrame(columns=["Código Identificador da Organização", "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"])
     pd_patr = pd.DataFrame(columns=["Código Identificador da Organização", "Tipo de Organização" , "Denominação da Organização", "Acrónimo", "Concelho da Sede", "Distrito da Sede", "Data da Primeira Atividade Registada", "Data da Última Atividade Registada", "Ativa ou Extinta"])
     pd_negc = pd.DataFrame(columns=["Código Identificador da Organização", "Denominação da Organização", "Identificador do Acto de Negociação", "Nome Acto", "Tipo Acto", "Natureza", "Ano", "Numero", "Série", "URL pata BTE", "Âmbito Geográfico" ])
@@ -180,10 +178,10 @@ def export():
     pd_elei = pd.DataFrame(columns=["Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"])
     
     sind = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa) FROM Org_Sindical""").fetchall()
-    pd_sind.from_records(filter(lambda x: x[0] in IDS, sind), columns=pd_sind.columns).to_excel(excel_writer, sheet_name="Organizações sindicais", index=False)
+    pd_sind.from_records(filter(lambda x: x[0] in IDS, sind),columns=pd_sind.columns).to_excel(excel_writer, sheet_name="Organizações sindicais", index=False)
     
     patr = connection.execute("""SELECT ID, Tipo, Nome, ifnull(Acronimo,""), Concelho_Sede, ifnull(Distrito_Sede,""), Data_Primeira_Actividade, Data_Ultima_Actividade, act2str(Activa) FROM Org_Patronal""").fetchall()
-    pd_patr.from_records(filter(lambda x: x[0] in IDS, patr), columns=pd_patr.columns).to_excel(excel_writer, sheet_name="Organizações de empregadores", index=False)
+    pd_patr.from_records(filter(lambda x: x[0] in IDS, patr),columns=pd_patr.columns).to_excel(excel_writer, sheet_name="Organizações de empregadores", index=False)
     
     negc = connection.execute("""
         SELECT DISTINCT ID_Organizacao_Sindical as ID, Org_Sindical.Nome, Actos_Negociacao_Colectiva.ID, Nome_Acto, Tipo_Acto, Natureza, Actos_Negociacao_Colectiva.Ano, Actos_Negociacao_Colectiva.Numero, Actos_Negociacao_Colectiva.Serie, Actos_Negociacao_Colectiva.URL, Actos_Negociacao_Colectiva.Ambito_Geografico
@@ -198,7 +196,7 @@ def export():
                       WHERE Org_Patronal.ID=ID_Organizacao_Patronal
                         AND ID_Organizacao_Patronal IS NOT NULL
                         ORDER BY ID ASC, Actos_Negociacao_Colectiva.Ano ASC, Actos_Negociacao_Colectiva.Numero ASC""").fetchall()
-    pd_negc.from_records(filter(lambda x: x[0] in IDS, negc), columns=pd_negc.columns).to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
+    pd_negc.from_records(filter(lambda x: x[0] in IDS, negc),columns=pd_negc.columns).to_excel(excel_writer, sheet_name="Negociação coletiva", index=False)
     
     padg = connection.execute("""
             SELECT Avisos_Greve_New.ID_Aviso_Greve, Org_Sindical.ID, Org_Sindical.Nome, Ano_Inicio, Mes_Inicio, Ano_Fim, Mes_Fim, CAE
@@ -216,7 +214,7 @@ def export():
                AND Avisos_Greve_Participante_Patronal.Id_Aviso_Greve = Avisos_Greve_New.ID_Aviso_Greve
           ORDER BY Avisos_Greve_New.ID_Aviso_Greve
         """).fetchall()
-    pd_padg.from_records(filter(lambda x: x[1] in IDS, padg), columns=pd_padg.columns).to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
+    pd_padg.from_records(filter(lambda x: x[1] in IDS, padg),columns=pd_padg.columns).to_excel(excel_writer, sheet_name="Pré avisos de greve", index=False)
     
     esta = connection.execute("""
              SELECT ID_Organizacao_Sindical as ID, Org_Sindical.Nome, Ano, Numero, Serie, URL
@@ -230,7 +228,7 @@ def export():
                AND Mudanca_Estatuto = TRUE
           ORDER BY ID ASC, Ano ASC, Numero ASC
         """).fetchall()
-    pd_esta.from_records(filter(lambda x: x[0] in IDS, esta), columns=pd_esta.columns).to_excel(excel_writer, sheet_name="Estatutos", index=False)
+    pd_esta.from_records(filter(lambda x: x[0] in IDS, esta),columns=pd_esta.columns).to_excel(excel_writer, sheet_name="Estatutos", index=False)
     
     elei = connection.execute("""
             SELECT ID_Organizacao_Sindical as ID, Org_Sindical.Nome, Ano, Numero, Serie, URL
@@ -244,25 +242,25 @@ def export():
                AND Eleicoes = TRUE
             ORDER BY ID ASC, Ano ASC, Numero ASC
         """).fetchall()
-    pd_elei.from_records(filter(lambda x: x[0] in IDS, elei), columns=pd_elei.columns).to_excel(excel_writer, sheet_name="Eleições", index=False)
+    pd_elei.from_records(filter(lambda x: x[0] in IDS, elei),columns=pd_elei.columns).to_excel(excel_writer, sheet_name="Eleições", index=False)
     
     excel_writer.sheets["Organizações sindicais"].set_column(0, pd_sind.shape[1]-1, 15)
-    excel_writer.sheets["Organizações sindicais"].autofilter(0, 0, pd_sind.shape[0], pd_sind.shape[1]-1)
+    excel_writer.sheets["Organizações sindicais"].autofilter(0, 0, len(sind), pd_sind.shape[1]-1)
     
     excel_writer.sheets["Organizações de empregadores"].set_column(0, pd_patr.shape[1]-1, 15)
-    excel_writer.sheets["Organizações de empregadores"].autofilter(0, 0, pd_patr.shape[0], pd_patr.shape[1]-1)
+    excel_writer.sheets["Organizações de empregadores"].autofilter(0, 0, len(patr), pd_patr.shape[1]-1)
     
     excel_writer.sheets["Negociação coletiva"].set_column(0, pd_negc.shape[1]-1, 15)
-    excel_writer.sheets["Negociação coletiva"].autofilter(0, 0, pd_negc.shape[0], pd_negc.shape[1]-1)
+    excel_writer.sheets["Negociação coletiva"].autofilter(0, 0, len(negc), pd_negc.shape[1]-1)
 
     excel_writer.sheets["Pré avisos de greve"].set_column(0, pd_padg.shape[1]-1, 15)
-    excel_writer.sheets["Pré avisos de greve"].autofilter(0, 0, pd_padg.shape[0], pd_padg.shape[1]-1)
+    excel_writer.sheets["Pré avisos de greve"].autofilter(0, 0, len(padg), pd_padg.shape[1]-1)
     
     excel_writer.sheets["Estatutos"].set_column(0, pd_esta.shape[1]-1, 15)
-    excel_writer.sheets["Estatutos"].autofilter(0, 0, pd_esta.shape[0], pd_esta.shape[1]-1)
+    excel_writer.sheets["Estatutos"].autofilter(0, 0, len(esta), pd_esta.shape[1]-1)
 
     excel_writer.sheets["Eleições"].set_column(0, pd_elei.shape[1]-1, 15)
-    excel_writer.sheets["Eleições"].autofilter(0, 0, pd_elei.shape[0], pd_elei.shape[1]-1)
+    excel_writer.sheets["Eleições"].autofilter(0, 0, len(elei), pd_elei.shape[1]-1)
 
     excel_writer.save()
     strIO.seek(0)

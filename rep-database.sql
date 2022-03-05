@@ -233,7 +233,7 @@ FROM
     ON I.numero = O.numero AND I.numeroSequencial = O.numSeq AND I.ano = O.ano AND I.tipoConvencaoCodigo = O.tipoConv 
     GROUP BY O.codEntG, O.condEntE, O.numAlt, I.numero, I.numeroSequencial, I.ano, I.tipoConvencaoCodigo) as I
 JOIN Entidades as E ON E.codEntG = I.codEntG AND E.codEntE = I.condEntE AND E.numAlt = I.numAlt
-ORDER BY codEntG, codEntE, numAlt, ano, numero;
+ORDER BY E.codEntG, E.codEntE, E.numAlt, I.ano, I.numero;
 
 DROP VIEW IF EXISTS Export_Avisos_Greve;
 CREATE VIEW Export_Avisos_Greve AS SELECT 
@@ -244,7 +244,7 @@ CREATE VIEW Export_Avisos_Greve AS SELECT
 FROM Avisos_Greve as A
 JOIN Avisos_Greve_Entidades as AE ON A._id_greve = AE._id_greve
 JOIN Entidades as E ON AE.codEntG = E.codEntG AND AE.codEntE = E.codEntE AND AE.numAlt = E.numAlt
-ORDER BY A._id_greve, codEntG, codEntE, numAlt, inicio_ano, inicio_mes;
+ORDER BY A._id_greve, E.codEntG, E.codEntE, E.numAlt, A.inicio_ano, A.inicio_mes;
 
 -- "Código Identificador da Organização", "Denominação da Organização", "Ano", "Número", "Série", "URL para BTE"
 DROP VIEW IF EXISTS Export_AlteracoesEstatutos;
@@ -255,7 +255,7 @@ CREATE VIEW Export_AlteracoesEstatutos AS SELECT
   CASE WHEN A.serieBTE = 0 OR A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
 FROM AlteracoesEstatutos as A
   JOIN Entidades as E ON A.codEntG = E.codEntG AND A.codEntE = E.codEntE AND A.numAlt = E.numAlt
-  ORDER BY codEntG, codEntE, numAlt, ano, numBTE, serieBTE;
+  ORDER BY E.codEntG, E.codEntE, E.numAlt, A.ano, A.numBTE, A.serieBTE;
 
 DROP VIEW IF EXISTS Export_EleicoesCorposGerentes;
 CREATE VIEW Export_EleicoesCorposGerentes AS SELECT
@@ -265,4 +265,4 @@ CREATE VIEW Export_EleicoesCorposGerentes AS SELECT
   CASE WHEN A.serieBTE = 0 OR A.serieBTE = 1 THEN "http://bte.gep.msess.gov.pt/completos/" || A.Ano || "/bte" || A.numBTE || "_" || A.Ano || ".pdf" ELSE "" END as urlBTE
 FROM EleicoesCorposGerentes as A
   JOIN Entidades as E ON A.codEntG = E.codEntG AND A.codEntE = E.codEntE AND A.numAlt = E.numAlt
-  ORDER BY codEntG, codEntE, numAlt, ano, numBTE, serieBTE;
+  ORDER BY E.codEntG, E.codEntE, E.numAlt, A.ano, A.numBTE, A.serieBTE;

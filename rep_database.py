@@ -73,6 +73,10 @@ def main():
 		for ano in range(1975, datetime.now().year + 1):
 			errors += insert_from_table(cursor, table, ano)
 		print(f"Errors inserting {table}: {errors}")
+	
+	cursor.execute("""UPDATE eleicoesCorposGerentes SET ano = strftime("%Y", dataBTE) WHERE ano = 0""")
+	cursor.execute("""UPDATE alteracoesEstatutos SET ano = strftime("%Y", dataBTE) WHERE ano = 0""")
+
 	connection.commit()
 	greves.main()
 	archive2.main()
